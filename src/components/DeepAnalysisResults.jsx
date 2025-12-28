@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brain, Shield, Zap, AlertOctagon, Lightbulb } from 'lucide-react';
+import { Brain, Shield, Zap, AlertOctagon, Lightbulb, FileText } from 'lucide-react';
 
 const DeepAnalysisResults = ({ results, onClose }) => {
     if (!results) return null;
@@ -99,6 +99,31 @@ const DeepAnalysisResults = ({ results, onClose }) => {
                     ))}
                 </ul>
             </div>
+
+            {results.recommendedPrompt && (
+                <div style={{ marginTop: '2rem' }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10b981' }}>
+                        <FileText size={16} /> Recommended Prompt Structure
+                    </h3>
+                    <div style={{
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid #10b981',
+                        borderRadius: '8px',
+                        padding: '1rem',
+                        overflowX: 'auto'
+                    }}>
+                        <pre style={{
+                            margin: 0,
+                            fontFamily: 'monospace',
+                            fontSize: '0.85rem',
+                            color: '#d1d5db',
+                            whiteSpace: 'pre-wrap'
+                        }}>
+                            {results.recommendedPrompt}
+                        </pre>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
