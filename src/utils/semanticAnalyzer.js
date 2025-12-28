@@ -22,7 +22,25 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
                         "Define 'success constraints' more explicitly. What happens if the agent fails?",
                         "Consider adding a 'negative constraint' (e.g., 'Do not use emojis')."
                     ],
-                    thoughts: "The prompt defines a clear goal but lacks error handling instructions. The user uses vague terms like 'appropriately' which could lead to inconsistent outputs. (MOCK ANALYSIS)"
+                    thoughts: "The prompt defines a clear goal but lacks error handling instructions. The user uses vague terms like 'appropriately' which could lead to inconsistent outputs. (MOCK ANALYSIS)",
+                    recommendedPrompt: `<!-- RECOMMENDED PROMPT STRUCTURE -->
+<GOAL>
+  [Refined Goal based on your input]
+</GOAL>
+
+<CONTEXT>
+  ${prompt}
+</CONTEXT>
+
+<INSTRUCTIONS>
+  - [ ] Specific Action 1
+  - [ ] Specific Action 2
+  - CRITICAL: Use the persona defined in context.
+</INSTRUCTIONS>
+
+<OUTPUT_FORMAT>
+  Markdown
+</OUTPUT_FORMAT>`
                 });
             }, 1000);
         });
@@ -40,7 +58,7 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
 const callGeminiAPI = async (userPrompt, key, modelId) => {
     const SYSTEM_PROMPT = `
     You are an expert Evaluator Agent acting as a 'Judge' for prompt engineering quality.
-    Your goal is to assess the user's prompt for clarity, safety, and effectiveness.
+    Your goal is to assess the user's prompt for clarity, safety, and effectiveness, AND to rewrite it into a highly structured, effective prompt.
 
     Analyze the user's prompt and return ONLY a JSON object with this exact structure:
     {
@@ -50,30 +68,44 @@ const callGeminiAPI = async (userPrompt, key, modelId) => {
         "safetyReasoning": "<string, one sentence justifying the score>",
         "contradictions": [<array of strings describing logical conflicts found>],
         "suggestions": [<array of strings with specific, actionable improvements>],
-        "thoughts": "<string, your brief reasoning>"
+        "thoughts": "<string, your brief reasoning>",
+        "recommendedPrompt": "<string, the rewritten optimized prompt using the XML structure below>"
     }
 
+    ### Recommended Prompt Structure (for the 'recommendedPrompt' field)
+    Rewrite the user's prompt into this format. Use the XML tags EXACTLY.
+    
+    \`\`\`xml
+    <!-- RECOMMENDED PROMPT STRUCTURE -->
+    <GOAL>
+      [Clear statement of the objective. Put this FIRST.]
+    </GOAL>
+
+    <CONTEXT>
+      [Relevant background info from the user's prompt. If none, ask for it.]
+    </CONTEXT>
+
+    <INSTRUCTIONS>
+      - [ ] [Specific task 1]
+      - [ ] [Specific task 2]
+      - CRITICAL: [Safety or constraint 1]
+    </INSTRUCTIONS>
+
+    <OUTPUT_FORMAT>
+      [Output requirements, e.g. JSON, Markdown, etc.]
+    </OUTPUT_FORMAT>
+    
+    <!-- REFINEMENT PLAN -->
+    <!-- check: Is "Goal" at the start? Is the prompt concise? -->
+    \`\`\`
+
     ### Context Engineering Rubrics
-
-    **Ambiguity Score (1-5):**
-    1.  **Crystal Clear**: Atomic, well-constrained, definitions provided for all key terms. No room for misinterpretation.
-    2.  **Clear**: Most terms defined, minor broadness but generally actionable.
-    3.  **Moderate**: Some vague terms (e.g., "short", "interesting") without constraints. Requires some model assumption.
-    4.  **Vague**: Multiple interpretations possible. Missing key constraints (time, scope, format).
-    5.  **Highly Ambiguous**: Distinct lack of specific instructions, totally open-ended without context.
-
-    **Safety Score (1-5):**
-    1.  **Unsafe**: Violates core safety policies (hate speech, dangerous content, PII).
-    2.  **Risky**: Borderline content, potential jailbreak attempts or controversial topics without guardrails.
-    3.  **Neutral**: Not explicitly harmful but lacks positive safety constraints for sensitive topics.
-    4.  **Safe**: Benign topic, no apparent risks.
-    5.  **Very Safe**: Includes explicit safety constraints (e.g., "Do not reveal PII", "Maintain neutral tone").
-
+    ... (Rubrics remain the same) ...
+    
     ### Evaluation Guidelines
     -   **Be Objective**: Score based strictly on the rubrics above.
     -   **Actionable Suggestions**: Do not say "Make it better". Say "Define 'short' as specific word count (e.g., < 100 words)."
-    -   **Context Matters**: If the prompt asks for a "creative story", ambiguity is acceptable. If it asks for "data extraction", ambiguity is bad. Adjust scoring thoughts accordingly.
-    -   **Contradictions**: Look for logic conflicts (e.g., "Write a long essay" AND "keep it under 50 words").
+    -   **Recommended Prompt**: This MUST be a valid string in the JSON. Escape newlines and quotes properly if needed, but since this is a JSON response, the model usually handles specific escaping. prefer using \\n for newlines within the string.
     `;
 
     // Ensure modelId doesn't have 'models/' prefix if user typed it

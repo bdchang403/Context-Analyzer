@@ -96,6 +96,31 @@ const AnalysisResults = ({ results }) => {
                     <p style={{ color: 'var(--text-secondary)' }}>Enter a prompt to see analysis.</p>
                 )}
             </div>
+
+            {results.recommendedPrompt && (
+                <div style={{ marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '2rem' }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10b981' }}>
+                        Recommended Prompt Structure
+                    </h3>
+                    <div style={{
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid #10b981',
+                        borderRadius: '8px',
+                        padding: '1rem',
+                        overflowX: 'auto'
+                    }}>
+                        <pre style={{
+                            margin: 0,
+                            fontFamily: 'monospace',
+                            fontSize: '0.85rem',
+                            color: '#d1d5db',
+                            whiteSpace: 'pre-wrap'
+                        }}>
+                            {results.recommendedPrompt}
+                        </pre>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
