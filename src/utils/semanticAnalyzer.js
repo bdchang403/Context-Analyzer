@@ -10,20 +10,11 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
                 const isShort = prompt.length < 50;
                 const hasContradiction = prompt.toLowerCase().includes("always") && prompt.toLowerCase().includes("never");
 
-                resolve({
-                    ambiguityScore: isShort ? 4 : 2,
-                    ambiguityReasoning: isShort ? "The prompt is too short to fully grasp the intent, leaving key constraints undefined." : "Most terms are well-defined, though 'appropriately' is subjective.",
-                    safetyScore: 5,
-                    safetyReasoning: "The prompt does not venture into any dangerous or sensitive topics.",
-                    contradictions: hasContradiction ?
-                        ["Contradiction found: You used terms 'always' and 'never' which might conflict contextually."] : [],
-                    suggestions: [
-                        "Clarify the 'persona' tone. You mentioned 'professional' but the prompt uses slang.",
-                        "Define 'success constraints' more explicitly. What happens if the agent fails?",
-                        "Consider adding a 'negative constraint' (e.g., 'Do not use emojis')."
-                    ],
-                    thoughts: "The prompt defines a clear goal but lacks error handling instructions. The user uses vague terms like 'appropriately' which could lead to inconsistent outputs. (MOCK ANALYSIS)",
-                    recommendedPrompt: `<!-- RECOMMENDED PROMPT STRUCTURE -->
+                const ambiguityScore = isShort ? 4 : 2;
+                const safetyScore = 5;
+                const needsRecommendation = ambiguityScore > 2 || safetyScore < 4;
+
+                const recommendedPrompt = needsRecommendation ? `<!-- RECOMMENDED PROMPT STRUCTURE -->
 <GOAL>
   [Refined Goal based on your input]
 </GOAL>
@@ -40,7 +31,22 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
 
 <OUTPUT_FORMAT>
   Markdown
-</OUTPUT_FORMAT>`
+</OUTPUT_FORMAT>` : null;
+
+                resolve({
+                    ambiguityScore,
+                    ambiguityReasoning: isShort ? "The prompt is too short to fully grasp the intent, leaving key constraints undefined." : "Most terms are well-defined, though 'appropriately' is subjective.",
+                    safetyScore,
+                    safetyReasoning: "The prompt does not venture into any dangerous or sensitive topics.",
+                    contradictions: hasContradiction ?
+                        ["Contradiction found: You used terms 'always' and 'never' which might conflict contextually."] : [],
+                    suggestions: [
+                        "Clarify the 'persona' tone. You mentioned 'professional' but the prompt uses slang.",
+                        "Define 'success constraints' more explicitly. What happens if the agent fails?",
+                        "Consider adding a 'negative constraint' (e.g., 'Do not use emojis')."
+                    ],
+                    thoughts: "The prompt defines a clear goal but lacks error handling instructions. The user uses vague terms like 'appropriately' which could lead to inconsistent outputs. (MOCK ANALYSIS)",
+                    recommendedPrompt
                 });
             }, 1000);
         });
@@ -69,8 +75,15 @@ const callGeminiAPI = async (userPrompt, key, modelId) => {
         "contradictions": [<array of strings describing logical conflicts found>],
         "suggestions": [<array of strings with specific, actionable improvements>],
         "thoughts": "<string, your brief reasoning>",
-        "recommendedPrompt": "<string, the rewritten optimized prompt using the XML structure below>"
+        "recommendedPrompt": "<string OR null, see 'Conditional Recommendation' below>"
     }
+
+    ### Conditional Recommendation
+    - You MUST return 'null' for the 'recommendedPrompt' field if:
+      1. The 'ambiguityScore' is 1 or 2 (Very Clear/Clear).
+      2. AND the 'safetyScore' is 4 or 5 (Safe/Very Safe).
+      3. OR if the user's prompt is already well-structured and your recommendation would be nearly identical.
+    - Otherwise, provide the rewritten prompt using the XML structure below.
 
     ### Recommended Prompt Structure (for the 'recommendedPrompt' field)
     Rewrite the user's prompt into this format. Use the XML tags EXACTLY.
