@@ -144,41 +144,10 @@ Goal: Extract user intents from the chat logs.
         score -= 5;
     }
 
-    // 5. Generate Recommended Prompt (Structured & Safe)
-    const recommendedPrompt = `<!-- RECOMMENDED PROMPT STRUCTURE -->
-<GOAL>
-  <!-- Define the primary objective here (Primacy Effect) -->
-  [Insert Clear Goal Here]
-</GOAL>
-
-<CONTEXT>
-  ${text && text.trim().length > 0 ? text.trim() : "<!-- Paste background context here -->"}
-</CONTEXT>
-
-<INSTRUCTIONS>
-  <!-- Explicit steps found in your prompt or suggested ones -->
-  - [ ] Action ITEM 1
-  - [ ] Action ITEM 2
-  
-  <!-- Safety & Ambiguity Protocol -->
-  - CRITICAL: If any request is ambiguous, ask clarifying questions instead of guessing.
-  - Do not hallucinate information not present in CONTEXT.
-</INSTRUCTIONS>
-
-<OUTPUT_FORMAT>
-  <!-- specific format requirements -->
-  Return the result in Markdown format.
-</OUTPUT_FORMAT>
-
-<!-- REFINEMENT PLAN -->
-<!-- check: Is "Goal" at the start? Is the prompt concise? (Lost-in-Middle check) -->
-`;
-
     return {
         score: Math.max(0, score),
         issues,
         goodPoints,
-        stats: { charCount, tokenCount },
-        recommendedPrompt
+        stats: { charCount, tokenCount }
     };
 };
