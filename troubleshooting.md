@@ -62,6 +62,19 @@ YAML validation failure due to duplicate keys (e.g., `flags` defined twice).
 **Solution:**
 Carefully review YAML indentation and ensure keys are unique within their parent scope. Use a linter or IDE validation to catch these before pushing.
 
+### 6. "Resource not accessible by integration" (403 Error)
+**Error:**
+```
+HTTP 403: Resource not accessible by integration
+```
+**Cause:**
+The default `GITHUB_TOKEN` used in GitHub Actions does not have permissions to modify repository settings (like the "website" URL), even with `contents: write` permissions.
+
+**Solution:**
+1.  Create a **Personal Access Token (PAT)** in GitHub Developer Settings with `repo` scope.
+2.  Add this token as a repository secret named `GH_PAT`.
+3.  Update the workflow to use `${{ secrets.GH_PAT }}` instead of `${{ secrets.GITHUB_TOKEN }}`.
+
 ## Local Development: Debugging "Blank Page of Death"
 
 A summary of lessons learned from debugging the Context-Checking Tool. Use this guide when the app server starts but the browser shows a white screen or fails to load.
