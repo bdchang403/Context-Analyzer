@@ -71,5 +71,4 @@ jobs:
           region: ${{ env.GAR_LOCATION }}
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}
           flags: '--allow-unauthenticated'
-          env_vars: |
-            PORT=8080
+          flags: '--allow-unauthenticated'
