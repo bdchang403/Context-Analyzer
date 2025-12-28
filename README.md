@@ -77,3 +77,7 @@ docker run -p 3000:3000 -e PORT=3000 context-checker
       --image us-central1-docker.pkg.dev/<project>/<repo>/context-checker \
       --allow-unauthenticated
     ```
+
+## Acknowledgements
+
+This project implements concepts and rubrics from [Agent Skills for Context Engineering](https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering), specifically focusing on the "Evaluator Agent" pattern and ambiguity/safety scoring.
