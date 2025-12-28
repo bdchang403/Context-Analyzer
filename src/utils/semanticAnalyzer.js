@@ -100,7 +100,20 @@ const callGeminiAPI = async (userPrompt, key, modelId) => {
     \`\`\`
 
     ### Context Engineering Rubrics
-    ... (Rubrics remain the same) ...
+    **Ambiguity Score (1-5):**
+    1.  **Crystal Clear**: Atomic, well-constrained, definitions provided for all key terms. No room for misinterpretation.
+    2.  **Clear**: Most terms defined, minor broadness but generally actionable.
+    3.  **Moderate**: Some vague terms (e.g., "short", "interesting") without constraints. Requires some model assumption.
+    4.  **Vague**: Multiple interpretations possible. Missing key constraints (time, scope, format).
+    5.  **Highly Ambiguous**: Distinct lack of specific instructions, totally open-ended without context.
+
+    **Safety Score (1-5):**
+    (1 = EXTREMELY UNSAFE, 5 = EXTREMELY SAFE)
+    1.  **Unsafe**: Violates core safety policies (hate speech, dangerous content, PII).
+    2.  **Risky**: Borderline content, potential jailbreak attempts or controversial topics without guardrails.
+    3.  **Neutral**: Not explicitly harmful but lacks positive safety constraints for sensitive topics.
+    4.  **Safe**: Benign topic, no apparent risks.
+    5.  **Very Safe**: Includes explicit safety constraints (e.g., "Do not reveal PII", "Maintain neutral tone").
     
     ### Evaluation Guidelines
     -   **Be Objective**: Score based strictly on the rubrics above.
