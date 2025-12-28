@@ -1,0 +1,122 @@
+/**
+ * Deep Semantic Analysis (LLM-as-a-Judge).
+ * Supports both Mock mode (for testing) and Real mode (Gemini API).
+ */
+export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemini-1.5-flash') => {
+    // 1. MOCK MODE (Default if no key)
+    if (!apiKey) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const isShort = prompt.length < 50;
+                const hasContradiction = prompt.toLowerCase().includes("always") && prompt.toLowerCase().includes("never");
+
+                resolve({
+                    ambiguityScore: isShort ? 4 : 2,
+                    ambiguityReasoning: isShort ? "The prompt is too short to fully grasp the intent, leaving key constraints undefined." : "Most terms are well-defined, though 'appropriately' is subjective.",
+                    safetyScore: 5,
+                    safetyReasoning: "The prompt does not venture into any dangerous or sensitive topics.",
+                    contradictions: hasContradiction ?
+                        ["Contradiction found: You used terms 'always' and 'never' which might conflict contextually."] : [],
+                    suggestions: [
+                        "Clarify the 'persona' tone. You mentioned 'professional' but the prompt uses slang.",
+                        "Define 'success constraints' more explicitly. What happens if the agent fails?",
+                        "Consider adding a 'negative constraint' (e.g., 'Do not use emojis')."
+                    ],
+                    thoughts: "The prompt defines a clear goal but lacks error handling instructions. The user uses vague terms like 'appropriately' which could lead to inconsistent outputs. (MOCK ANALYSIS)"
+                });
+            }, 1000);
+        });
+    }
+
+    // 2. REAL MODE (Gemini API)
+    try {
+        return await callGeminiAPI(prompt, apiKey, modelId);
+    } catch (error) {
+        console.error("Gemini API Error:", error);
+        throw error; // Re-throw exact error message from callGeminiAPI
+    }
+};
+
+const callGeminiAPI = async (userPrompt, key, modelId) => {
+    const SYSTEM_PROMPT = `
+    You are an expert Evaluator Agent acting as a 'Judge' for prompt engineering quality.
+    Your goal is to assess the user's prompt for clarity, safety, and effectiveness.
+
+    Analyze the user's prompt and return ONLY a JSON object with this exact structure:
+    {
+        "ambiguityScore": <number 1-5>,
+        "ambiguityReasoning": "<string, one sentence justifying the score>",
+        "safetyScore": <number 1-5>,
+        "safetyReasoning": "<string, one sentence justifying the score>",
+        "contradictions": [<array of strings describing logical conflicts found>],
+        "suggestions": [<array of strings with specific, actionable improvements>],
+        "thoughts": "<string, your brief reasoning>"
+    }
+
+    ### Context Engineering Rubrics
+
+    **Ambiguity Score (1-5):**
+    1.  **Crystal Clear**: Atomic, well-constrained, definitions provided for all key terms. No room for misinterpretation.
+    2.  **Clear**: Most terms defined, minor broadness but generally actionable.
+    3.  **Moderate**: Some vague terms (e.g., "short", "interesting") without constraints. Requires some model assumption.
+    4.  **Vague**: Multiple interpretations possible. Missing key constraints (time, scope, format).
+    5.  **Highly Ambiguous**: Distinct lack of specific instructions, totally open-ended without context.
+
+    **Safety Score (1-5):**
+    1.  **Unsafe**: Violates core safety policies (hate speech, dangerous content, PII).
+    2.  **Risky**: Borderline content, potential jailbreak attempts or controversial topics without guardrails.
+    3.  **Neutral**: Not explicitly harmful but lacks positive safety constraints for sensitive topics.
+    4.  **Safe**: Benign topic, no apparent risks.
+    5.  **Very Safe**: Includes explicit safety constraints (e.g., "Do not reveal PII", "Maintain neutral tone").
+
+    ### Evaluation Guidelines
+    -   **Be Objective**: Score based strictly on the rubrics above.
+    -   **Actionable Suggestions**: Do not say "Make it better". Say "Define 'short' as specific word count (e.g., < 100 words)."
+    -   **Context Matters**: If the prompt asks for a "creative story", ambiguity is acceptable. If it asks for "data extraction", ambiguity is bad. Adjust scoring thoughts accordingly.
+    -   **Contradictions**: Look for logic conflicts (e.g., "Write a long essay" AND "keep it under 50 words").
+    `;
+
+    // Ensure modelId doesn't have 'models/' prefix if user typed it
+    const cleanModelId = modelId.replace('models/', '');
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanModelId}:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{ text: SYSTEM_PROMPT + "\n\nAnalyze this prompt:\n" + userPrompt }]
+            }],
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
+        })
+    });
+
+    if (!response.ok) {
+        const err = await response.json();
+        const msg = err.error?.message || "API Request Failed";
+        throw new Error(`Gemini API Error: ${msg}`);
+    }
+
+    const data = await response.json();
+    try {
+        const text = data.candidates[0].content.parts[0].text;
+        return JSON.parse(text);
+    } catch (e) {
+        throw new Error("Failed to parse Gemini response: " + e.message);
+    }
+};
+
+export const fetchAvailableModels = async (apiKey) => {
+    if (!apiKey) throw new Error("API Key required");
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Failed to list models");
+    }
+
+    const data = await response.json();
+    return data.models || [];
+};

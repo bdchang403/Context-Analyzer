@@ -1,0 +1,156 @@
+import { describe, it, expect } from 'vitest';
+import { analyzePrompt } from './analyzer';
+
+/* ==========================================================================
+   TEST DATA
+   ========================================================================== */
+
+const PROMPTS = {
+    ORCHESTRATOR_MARKDOWN: `# Workflow Orchestrator
+
+You are a workflow orchestration expert managing a team of specialized AI agents.
+
+## Your Role
+
+- Analyze complex tasks and decompose them into subtasks
+- Assign subtasks to the most appropriate agents
+- Coordinate outputs and manage dependencies
+
+## Available Agents
+
+### Evaluator Agent
+**Capabilities**: Quality assessment, scoring, pairwise comparison
+**Use when**: Need to assess response quality, compare outputs, validate content
+
+## Task Template
+
+When delegating to an agent, provide:
+
+\`\`\`
+Agent: [agent_name]
+Task: [clear description of what to do]
+\`\`\`
+`,
+
+    DIRECT_SCORING_XML: `# Direct Scoring Evaluation
+
+You are an expert evaluator assessing the quality of an AI-generated response.
+
+## Your Task
+
+Evaluate the response below against the specified criteria.
+
+## Original Prompt/Task
+
+<task>
+{{original_prompt}}
+</task>
+
+{{#if context}}
+## Additional Context
+
+<context>
+{{context}}
+</context>
+{{/if}}
+`,
+
+    BAD_STRUCTURE: `
+I want you to be a coding assistant. Help me write python code. 
+Also invoke the search tool if you need to. 
+Just write the code and don't say anything else.
+`,
+
+    UNSTRUCTURED: "This is just a block of text without any clear structure.",
+
+    LONG_20K_TOKENS: "a".repeat(80000),   // ~20k tokens
+    VERY_LONG_100K_TOKENS: "a".repeat(400000) // ~100k tokens
+};
+
+/* ==========================================================================
+   TEST SUITE
+   ========================================================================== */
+
+describe('Prompt Analyzer', () => {
+
+    describe('1. Structure & Clarity Checks', () => {
+
+        it('should recognize and reward Markdown headers', () => {
+            const result = analyzePrompt(PROMPTS.ORCHESTRATOR_MARKDOWN);
+
+            expect(result.score, 'Score should be high for well-structured Markdown').toBeGreaterThan(60);
+            expect(result.goodPoints.some(p => p.includes("Markdown headers"))).toBe(true);
+        });
+
+        it('should recognize and reward XML tags', () => {
+            const result = analyzePrompt(PROMPTS.DIRECT_SCORING_XML);
+
+            expect(result.score, 'Score should be high for well-structured XML').toBeGreaterThan(60);
+            expect(result.goodPoints.some(p => p.includes("XML tags"))).toBe(true);
+        });
+
+        it('should penalize unstructured prompts', () => {
+            const result = analyzePrompt(PROMPTS.BAD_STRUCTURE);
+
+            expect(result.score, 'Score should be low for unstructured text').toBeLessThan(100);
+            expect(result.issues).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ category: 'Structure' })
+                ])
+            );
+        });
+    });
+
+    describe('2. Recommendation Features', () => {
+
+        it('should provide code examples for identified issues', () => {
+            const result = analyzePrompt(PROMPTS.UNSTRUCTURED);
+
+            // Structure Issue Check
+            const structureIssue = result.issues.find(i => i.category === 'Structure');
+            expect(structureIssue, 'Should find a Structure issue').toBeDefined();
+            expect(structureIssue.example, 'Structure issue should have an example').toContain('<INSTRUCTIONS>');
+
+            // Clarity Issue Check
+            const clarityIssue = result.issues.find(i => i.category === 'Clarity');
+            expect(clarityIssue, 'Should find a Clarity issue').toBeDefined();
+            expect(clarityIssue.example, 'Clarity issue should have an example').toContain('Goal:');
+        });
+    });
+
+    describe('3. Degradation & Model Limits', () => {
+
+        describe('Default Model (Generic)', () => {
+            it('should warn about degradtion at 20k tokens', () => {
+                const result = analyzePrompt(PROMPTS.LONG_20K_TOKENS);
+
+                // Expect medium severity warning for default model (~16k limit)
+                expect(result.issues).toEqual(
+                    expect.arrayContaining([
+                        expect.objectContaining({ category: 'Degradation', severity: 'medium' })
+                    ])
+                );
+            });
+        });
+
+        describe('GPT 5.2 (High Capacity)', () => {
+            it('should NOT warn at 20k tokens (Limit is 64k)', () => {
+                const result = analyzePrompt(PROMPTS.LONG_20K_TOKENS, 'gpt-5.2');
+
+                const degradationIssues = result.issues.filter(i => i.category === 'Degradation');
+                expect(degradationIssues.length, 'Should handle 20k tokens without warning').toBe(0);
+            });
+
+            it('should warn at 100k tokens (Limit is 64k)', () => {
+                const result = analyzePrompt(PROMPTS.VERY_LONG_100K_TOKENS, 'gpt-5.2');
+
+                expect(result.issues).toEqual(
+                    expect.arrayContaining([
+                        expect.objectContaining({ category: 'Degradation' })
+                    ])
+                );
+            });
+        });
+    });
+
+});
