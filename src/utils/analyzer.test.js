@@ -61,7 +61,10 @@ Also invoke the search tool if you need to.
 Just write the code and don't say anything else.
 `,
 
-    UNSTRUCTURED: "This is just a block of text without any clear structure.",
+    SHORT_PROMPT: "test",
+    SHORT_BUT_LONG_ENOUGH: "I want you to be a coding assistant. Help me write python code. Also invoke the search tool if you need to.",
+
+    UNSTRUCTURED: "This is just a block of text without any clear structure. It is deliberately written to be unstructured but long enough to pass the low context check.",
 
     LONG_20K_TOKENS: "a".repeat(80000),   // ~20k tokens
     VERY_LONG_100K_TOKENS: "a".repeat(400000) // ~100k tokens
@@ -115,6 +118,33 @@ describe('Prompt Analyzer', () => {
             const clarityIssue = result.issues.find(i => i.category === 'Clarity');
             expect(clarityIssue, 'Should find a Clarity issue').toBeDefined();
             expect(clarityIssue.example, 'Clarity issue should have an example').toContain('Goal:');
+        });
+    });
+
+    describe('4. Low Context Checks', () => {
+
+        it('should heavily penalize extremely short prompts (< 20 tokens)', () => {
+            // "test" is very short
+            const result = analyzePrompt(PROMPTS.SHORT_PROMPT);
+
+            // Expected: 100 - 30 (low context) - 20 (structure) - 10 (goal) - 10 (example) = 30
+            expect(result.score, 'Score should be very low for "test"').toBeLessThan(50);
+            expect(result.issues).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ category: 'Clarity', severity: 'high', text: expect.stringContaining('too short') })
+                ])
+            );
+        });
+
+        it('should NOT penalize poorly constructed but sufficient length prompts with "Low Context"', () => {
+            const result = analyzePrompt(PROMPTS.BAD_STRUCTURE);
+            // This prompt is > 20 tokens, so no "Low Context" penalty.
+            // Expected: 100 - 20 (structure) - 10 (goal) - 10 (example) = 60
+
+            const lowContextIssue = result.issues.find(i => i.text.includes('too short'));
+            expect(lowContextIssue, 'Should NOT find a Low Context issue').toBeUndefined();
+
+            expect(result.score, 'Score should be mediocre (around 60) but not failing (<40)').toBeGreaterThan(40);
         });
     });
 

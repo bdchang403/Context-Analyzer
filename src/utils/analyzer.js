@@ -17,7 +17,21 @@ export const analyzePrompt = (text, modelKey = "default") => {
         return { score: 0, issues: [], goodPoints: [] };
     }
 
-    // 1. Structure Check (XML or Markdown Headers)
+    // 1. Length & Degradation Check (Early exit/penalty for too short)
+    const charCount = text.length;
+    const tokenCount = Math.ceil(charCount / 4);
+
+    if (tokenCount < 20) {
+        score -= 30;
+        issues.push({
+            category: "Clarity",
+            text: "Prompt is too short to provide adequate context. Expand on your request.",
+            example: "Instead of 'Fix code', try 'Fix the bug in the authentication module where...'",
+            severity: "high"
+        });
+    }
+
+    // 2. Structure Check (XML or Markdown Headers)
     // Relaxed XML regex to catch tags with attributes and varying case
     const hasXmlTags = /<([a-zA-Z0-9_-]+)(?:\s+[^>]*)?>[\s\S]*?<\/\1>/i.test(text);
     const hasMarkdownHeaders = /^#{1,6}\s+.+$/m.test(text);
@@ -46,10 +60,8 @@ export const analyzePrompt = (text, modelKey = "default") => {
         });
     }
 
-    // 2. Length & Degradation Check
-    const charCount = text.length;
-    // approx tokens
-    const tokenCount = Math.ceil(charCount / 4);
+    // 2. Length & Degradation Check (continued)
+    // charCount and tokenCount calculated above
 
     const limits = MODEL_LIMITS[modelKey] || MODEL_LIMITS["default"];
 
