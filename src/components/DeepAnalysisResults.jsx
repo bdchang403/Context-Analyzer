@@ -1,9 +1,26 @@
 import React from 'react';
-import { Brain, Shield, Zap, AlertOctagon, Lightbulb, FileText } from 'lucide-react';
+import { Brain, Shield, Zap, AlertOctagon, Lightbulb, FileText, HelpCircle } from 'lucide-react';
 
 const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
     const [viewMode, setViewMode] = React.useState('formatted'); // 'formatted' | 'json'
     const [sdkFormat, setSdkFormat] = React.useState('vertex'); // 'vertex' | 'openai' | 'anthropic'
+    const [activeTooltip, setActiveTooltip] = React.useState(null); // 'ambiguity' | 'safety' | null
+
+    const AMBIGUITY_RUBRIC = [
+        "1. Crystal Clear: Atomic, definitions provided.",
+        "2. Clear: Most terms defined, actionable.",
+        "3. Moderate: Some vague terms without constraints.",
+        "4. Vague: Multiple interpretations possible.",
+        "5. Highly Ambiguous: Open-ended, no context."
+    ];
+
+    const SAFETY_RUBRIC = [
+        "1. Unsafe: Violates core safety policies.",
+        "2. Risky: Borderline content, potential jailbreak.",
+        "3. Neutral: Lacks positive safety constraints.",
+        "4. Safe: Benign topic, no apparent risks.",
+        "5. Very Safe: Includes explicit safety constraints."
+    ];
 
     if (!results) return null;
 
@@ -158,8 +175,36 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
             ) : (
                 <>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-                        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', textAlign: 'center' }}>
-                            <div style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Ambiguity Score</div>
+                        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', position: 'relative' }}>
+                            <div
+                                style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                                onMouseEnter={() => setActiveTooltip('ambiguity')}
+                                onMouseLeave={() => setActiveTooltip(null)}
+                            >
+                                Ambiguity Score <HelpCircle size={14} />
+                            </div>
+                            {activeTooltip === 'ambiguity' && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: '#1f2937',
+                                    border: '1px solid #4b5563',
+                                    borderRadius: '8px',
+                                    padding: '1rem',
+                                    zIndex: 10,
+                                    width: '250px',
+                                    textAlign: 'left',
+                                    fontSize: '0.75rem',
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                                }}>
+                                    <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#fff' }}>Ambiguity Rubric (1-5)</strong>
+                                    {AMBIGUITY_RUBRIC.map((r, i) => (
+                                        <div key={i} style={{ marginBottom: '0.25rem', color: '#d1d5db' }}>{r}</div>
+                                    ))}
+                                </div>
+                            )}
                             <div style={{ fontSize: '2rem', fontWeight: 700, color: getScoreColor(ambiguityScore, 'ambiguity') }}>
                                 {ambiguityScore}/5
                             </div>
@@ -168,8 +213,36 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
                                 {results.ambiguityReasoning || "No reasoning provided."}
                             </div>
                         </div>
-                        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', textAlign: 'center' }}>
-                            <div style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Safety Score</div>
+                        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', position: 'relative' }}>
+                            <div
+                                style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                                onMouseEnter={() => setActiveTooltip('safety')}
+                                onMouseLeave={() => setActiveTooltip(null)}
+                            >
+                                Safety Score <HelpCircle size={14} />
+                            </div>
+                            {activeTooltip === 'safety' && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    background: '#1f2937',
+                                    border: '1px solid #4b5563',
+                                    borderRadius: '8px',
+                                    padding: '1rem',
+                                    zIndex: 10,
+                                    width: '250px',
+                                    textAlign: 'left',
+                                    fontSize: '0.75rem',
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                                }}>
+                                    <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#fff' }}>Safety Rubric (1-5)</strong>
+                                    {SAFETY_RUBRIC.map((r, i) => (
+                                        <div key={i} style={{ marginBottom: '0.25rem', color: '#d1d5db' }}>{r}</div>
+                                    ))}
+                                </div>
+                            )}
                             <div style={{ fontSize: '2rem', fontWeight: 700, color: getScoreColor(safetyScore, 'safety') }}>
                                 {safetyScore}/5
                             </div>

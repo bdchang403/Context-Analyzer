@@ -77,3 +77,13 @@ textarea {
 textarea:focus {
   border-color: var(--accent-color);
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

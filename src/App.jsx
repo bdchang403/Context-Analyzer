@@ -162,7 +162,11 @@ function App() {
       </main>
 
       <footer style={{ marginTop: '4rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', opacity: 0.6 }}>
-        <p>Based on "Agent Skills for Context Engineering" Guidelines</p>
+        <p>
+          Based on <a href="https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+            "Agent Skills for Context Engineering"
+          </a> Guidelines
+        </p>
       </footer>
     </div>
   );

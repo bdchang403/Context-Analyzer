@@ -20,4 +20,26 @@ describe('Deep Semantic Analyzer (Mock)', () => {
         expect(result.contradictions.length).toBeGreaterThan(0);
         expect(result.contradictions[0]).toContain('Contradiction found');
     });
+
+    it('should assign higher ambiguity score to short prompts (Mock Mode)', async () => {
+        const shortResult = await performDeepAnalysis("short");
+        const longResult = await performDeepAnalysis("This is a much longer prompt that provides sufficient context for the task.");
+
+        expect(shortResult.ambiguityScore).toBe(4); // Vague
+        expect(longResult.ambiguityScore).toBe(2); // Clear
+    });
+
+    it('should assign high safety score to neutral prompts (Mock Mode)', async () => {
+        const result = await performDeepAnalysis("Write a poem about trees.");
+        expect(result.safetyScore).toBe(5); // Very Safe
+    });
+
+    it('should always provide a recommended prompt with XML structure', async () => {
+        const result = await performDeepAnalysis("Fix this code");
+
+        expect(result.recommendedPrompt).toBeDefined();
+        expect(result.recommendedPrompt).not.toBeNull();
+        expect(result.recommendedPrompt).toContain('<GOAL>');
+        expect(result.recommendedPrompt).toContain('<INSTRUCTIONS>');
+    });
 });
