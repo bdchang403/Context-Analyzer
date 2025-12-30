@@ -3,6 +3,7 @@ import { Brain, Shield, Zap, AlertOctagon, Lightbulb, FileText } from 'lucide-re
 
 const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
     const [viewMode, setViewMode] = React.useState('formatted'); // 'formatted' | 'json'
+    const [sdkFormat, setSdkFormat] = React.useState('vertex'); // 'vertex' | 'openai' | 'anthropic'
 
     if (!results) return null;
 
@@ -14,26 +15,63 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
         return 'var(--text-primary)';
     };
 
-    // Construct Vertex AI Payload
-    // Use recommended prompt if available, otherwise original input
-    const finalPrompt = results.recommendedPrompt || inputPrompt || "";
-    const vertexPayload = {
-        "contents": [
-            {
-                "role": "user",
-                "parts": [
-                    { "text": finalPrompt }
-                ]
-            }
-        ],
-        "generationConfig": {
-            "temperature": 1,
-            "topK": 64,
-            "topP": 0.95,
-            "maxOutputTokens": 8192,
-            "responseMimeType": "text/plain"
+    // Construct Payload Logic
+    const getPayload = () => {
+        // Use recommended prompt if available, otherwise original input
+        const finalPrompt = results.recommendedPrompt || inputPrompt || "";
+
+        switch (sdkFormat) {
+            case 'openai':
+                return {
+                    "model": "gpt-4o",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are a helpful assistant."
+                        },
+                        {
+                            "role": "user",
+                            "content": finalPrompt
+                        }
+                    ],
+                    "temperature": 1,
+                    "max_tokens": 4096,
+                    "top_p": 1
+                };
+            case 'anthropic':
+                return {
+                    "model": "claude-3-5-sonnet-20241022",
+                    "max_tokens": 8192,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": finalPrompt
+                        }
+                    ]
+                };
+            case 'vertex':
+            default:
+                return {
+                    "contents": [
+                        {
+                            "role": "user",
+                            "parts": [
+                                { "text": finalPrompt }
+                            ]
+                        }
+                    ],
+                    "generationConfig": {
+                        "temperature": 1,
+                        "topK": 64,
+                        "topP": 0.95,
+                        "maxOutputTokens": 8192,
+                        "responseMimeType": "text/plain"
+                    }
+                };
         }
     };
+
+    const currentPayload = getPayload();
 
     return (
         <div className="glass-card" style={{
@@ -88,11 +126,33 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
 
             {viewMode === 'json' ? (
                 <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', overflow: 'auto' }}>
-                    <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                        Ready-to-use Vertex AI API Payload ({results.recommendedPrompt ? "Optimized" : "Original"})
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                            Ready-to-use API Payload ({results.recommendedPrompt ? "Optimized" : "Original"})
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {['vertex', 'openai', 'anthropic'].map(fmt => (
+                                <button
+                                    key={fmt}
+                                    onClick={() => setSdkFormat(fmt)}
+                                    style={{
+                                        background: sdkFormat === fmt ? '#6366f1' : 'rgba(255,255,255,0.1)',
+                                        border: 'none',
+                                        color: 'white',
+                                        padding: '0.2rem 0.6rem',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.75rem',
+                                        textTransform: 'capitalize'
+                                    }}
+                                >
+                                    {fmt === 'vertex' ? 'Google / Vertex' : fmt}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                     <pre style={{ margin: 0, fontSize: '0.85rem', color: '#a5b4fc', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {JSON.stringify(vertexPayload, null, 2)}
+                        {JSON.stringify(currentPayload, null, 2)}
                     </pre>
                 </div>
             ) : (

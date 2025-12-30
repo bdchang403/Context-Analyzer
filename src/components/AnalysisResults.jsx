@@ -12,6 +12,7 @@ const SeverityIcon = ({ severity }) => {
 
 const AnalysisResults = ({ results, inputPrompt }) => {
     const [viewMode, setViewMode] = React.useState('formatted'); // 'formatted' | 'json'
+    const [sdkFormat, setSdkFormat] = React.useState('vertex'); // 'vertex' | 'openai' | 'anthropic'
 
     if (!results) return null;
 
@@ -21,31 +22,66 @@ const AnalysisResults = ({ results, inputPrompt }) => {
     if (score < 50) scoreColor = 'var(--error)';
     else if (score < 80) scoreColor = 'var(--warning)';
 
-    // Construct Vertex AI Payload
-    // If the input is unstructured, wrap it in a template to guide the user (as per "outlined results")
-    let structuredText = inputPrompt || "";
-    // Simple check: if it lacks major XML tags, apply template structure
-    if (structuredText && !structuredText.includes("<GOAL>") && !structuredText.includes("<INSTRUCTIONS>")) {
-        structuredText = `<GOAL>\n${inputPrompt}\n</GOAL>\n\n<CONTEXT>\n  [Background Information]\n</CONTEXT>\n\n<INSTRUCTIONS>\n  - [ ] Step 1\n  - [ ] Step 2\n</INSTRUCTIONS>`;
-    }
+    // Construct Payload Logic
+    const getPayload = () => {
+        // Enforce structure if missing
+        let structuredText = inputPrompt || "";
+        if (structuredText && !structuredText.includes("<GOAL>") && !structuredText.includes("<INSTRUCTIONS>")) {
+            structuredText = `<GOAL>\n${inputPrompt}\n</GOAL>\n\n<CONTEXT>\n  [Background Information]\n</CONTEXT>\n\n<INSTRUCTIONS>\n  - [ ] Step 1\n  - [ ] Step 2\n</INSTRUCTIONS>`;
+        }
 
-    const vertexPayload = {
-        "contents": [
-            {
-                "role": "user",
-                "parts": [
-                    { "text": structuredText }
-                ]
-            }
-        ],
-        "generationConfig": {
-            "temperature": 1,
-            "topK": 64,
-            "topP": 0.95,
-            "maxOutputTokens": 8192,
-            "responseMimeType": "text/plain"
+        switch (sdkFormat) {
+            case 'openai':
+                return {
+                    "model": "gpt-4o",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are a helpful assistant."
+                        },
+                        {
+                            "role": "user",
+                            "content": structuredText
+                        }
+                    ],
+                    "temperature": 1,
+                    "max_tokens": 4096,
+                    "top_p": 1
+                };
+            case 'anthropic':
+                return {
+                    "model": "claude-3-5-sonnet-20241022",
+                    "max_tokens": 8192,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": structuredText
+                        }
+                    ]
+                };
+            case 'vertex':
+            default:
+                return {
+                    "contents": [
+                        {
+                            "role": "user",
+                            "parts": [
+                                { "text": structuredText }
+                            ]
+                        }
+                    ],
+                    "generationConfig": {
+                        "temperature": 1,
+                        "topK": 64,
+                        "topP": 0.95,
+                        "maxOutputTokens": 8192,
+                        "responseMimeType": "text/plain"
+                    }
+                };
         }
     };
+
+    const currentPayload = getPayload();
 
     return (
         <div className="glass-card" style={{ padding: '2rem', marginTop: '2rem' }}>
@@ -93,11 +129,33 @@ const AnalysisResults = ({ results, inputPrompt }) => {
 
             {viewMode === 'json' ? (
                 <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', overflow: 'auto' }}>
-                    <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                        Ready-to-use Vertex AI API Payload (based on your input)
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                            Ready-to-use API Payload
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {['vertex', 'openai', 'anthropic'].map(fmt => (
+                                <button
+                                    key={fmt}
+                                    onClick={() => setSdkFormat(fmt)}
+                                    style={{
+                                        background: sdkFormat === fmt ? '#6366f1' : 'rgba(255,255,255,0.1)',
+                                        border: 'none',
+                                        color: 'white',
+                                        padding: '0.2rem 0.6rem',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.75rem',
+                                        textTransform: 'capitalize'
+                                    }}
+                                >
+                                    {fmt === 'vertex' ? 'Google / Vertex' : fmt}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                     <pre style={{ margin: 0, fontSize: '0.85rem', color: '#a5b4fc', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {JSON.stringify(vertexPayload, null, 2)}
+                        {JSON.stringify(currentPayload, null, 2)}
                     </pre>
                 </div>
             ) : (
