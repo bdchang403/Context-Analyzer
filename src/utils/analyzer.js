@@ -8,6 +8,9 @@ export const MODEL_LIMITS = {
     "default": { name: "Generic Model", degradationOnset: 16000, severeDegradation: 32000 }
 };
 
+export const RESEARCH_TAGS = ['report_format', 'document_structure', 'style_guide', 'citations', 'special_formats', 'planning_rules'];
+export const AGENTIC_TAGS = ['agent_loop', 'planner_module', 'knowledge_module', 'datasource_module', 'todo_rules', 'browser_rules', 'shell_rules'];
+
 export const analyzePrompt = (text, modelKey = "default") => {
     const issues = [];
     const goodPoints = [];
@@ -38,6 +41,18 @@ export const analyzePrompt = (text, modelKey = "default") => {
 
     if (hasXmlTags) {
         goodPoints.push("You are using XML tags for structural separation, which is excellent for modern models.");
+
+        // Advanced Structure Detection
+        const lowerText = text.toLowerCase();
+        const researchCount = RESEARCH_TAGS.filter(tag => lowerText.includes(`<${tag}>`)).length;
+        const agenticCount = AGENTIC_TAGS.filter(tag => lowerText.includes(`<${tag}>`)).length;
+
+        if (researchCount >= 2) {
+            goodPoints.push("Detected 'Deep Research' structure (e.g. style guides, report formats). This is excellent for comprehensive output tasks.");
+        }
+        if (agenticCount >= 2) {
+            goodPoints.push("Detected 'Agentic' structure (e.g. loops, planning modules). This is great for autonomous or complex multi-step workflows.");
+        }
     }
 
     if (hasMarkdownHeaders) {

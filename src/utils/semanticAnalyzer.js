@@ -61,6 +61,8 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
     }
 };
 
+import { RESEARCH_TAGS, AGENTIC_TAGS } from './analyzer.js';
+
 const callGeminiAPI = async (userPrompt, key, modelId) => {
     const SYSTEM_PROMPT = `
     You are an expert Evaluator Agent acting as a 'Judge' for prompt engineering quality.
@@ -78,38 +80,69 @@ const callGeminiAPI = async (userPrompt, key, modelId) => {
         "recommendedPrompt": "<string OR null, see 'Conditional Recommendation' below>"
     }
 
+    ### Keyword-Based Trigger Logic
+    Analyze the user's INTENT. Use these specific keys to determine the best structure:
+    
+    1. **Deep Research Triggers**: If the user asks for a "report", "paper", "deep dive", "comprehensive analysis", or implies the need for:
+       [${RESEARCH_TAGS.join(', ')}]
+       -> RECOMMENDED: Use Option B (Deep Research).
+
+    2. **Agentic Workflow Triggers**: If the user asks for an "agent", "loop", "autonomous task", "coding bot", or implies the need for:
+       [${AGENTIC_TAGS.join(', ')}]
+       -> RECOMMENDED: Use Option C (Agentic Workflow).
+
+    3. **Standard**: If neither of the above apply, use Option A.
+
     ### Conditional Recommendation
     - You MUST return 'null' for the 'recommendedPrompt' field if:
       1. The 'ambiguityScore' is 1 or 2 (Very Clear/Clear).
       2. AND the 'safetyScore' is 4 or 5 (Safe/Very Safe).
       3. OR if the user's prompt is already well-structured and your recommendation would be nearly identical.
-    - Otherwise, provide the rewritten prompt using the XML structure below.
+    - Otherwise, provide the rewritten prompt using one of the structures below.
 
-    ### Recommended Prompt Structure (for the 'recommendedPrompt' field)
-    Rewrite the user's prompt into this format. Use the XML tags EXACTLY.
-    
+    ### Prompt Structures
+    Choose the structure that best fits the user's intent.
+
+    **Option A: Standard (General Purpose)**
+    Use this for clear, simple tasks.
     \`\`\`xml
     <!-- RECOMMENDED PROMPT STRUCTURE -->
-    <GOAL>
-      [Clear statement of the objective. Put this FIRST.]
-    </GOAL>
-
-    <CONTEXT>
-      [Relevant background info from the user's prompt. If none, ask for it.]
-    </CONTEXT>
-
+    <GOAL> [Clear statement of the objective] </GOAL>
+    <CONTEXT> [Relevant background info] </CONTEXT>
     <INSTRUCTIONS>
       - [ ] [Specific task 1]
-      - [ ] [Specific task 2]
-      - CRITICAL: [Safety or constraint 1]
+      - CRITICAL: [Safety or constraint]
     </INSTRUCTIONS>
+    <OUTPUT_FORMAT> [Output requirements] </OUTPUT_FORMAT>
+    \`\`\`
 
-    <OUTPUT_FORMAT>
-      [Output requirements, e.g. JSON, Markdown, etc.]
-    </OUTPUT_FORMAT>
-    
-    <!-- REFINEMENT PLAN -->
-    <!-- check: Is "Goal" at the start? Is the prompt concise? -->
+    **Option B: Deep Research (For Reports/Writing)**
+    Use this for requests asking for reports, deep research, or comprehensive writing.
+    \`\`\`xml
+    <!-- RESEARCH STRUCTURE -->
+    <GOAL> [Research goal] </GOAL>
+    <REPORT_FORMAT> [Structure of the report, e.g. defined sections] </REPORT_FORMAT>
+    <DOCUMENT_STRUCTURE>
+      - Begin with title
+      - Usage of ## and ### headers
+      - Narrative flow, no lists
+    </DOCUMENT_STRUCTURE>
+    <STYLE_GUIDE> [Tone, academic prose, no lists] </STYLE_GUIDE>
+    <CITATIONS> [Link citations inline] </CITATIONS>
+    \`\`\`
+
+    **Option C: Agentic Workflow (For Complex/Autonomous Tasks)**
+    Use this for autonomous agent tasks, coding loops, or multi-step execution.
+    \`\`\`xml
+    <!-- AGENTIC STRUCTURE -->
+    <AGENT_IDENTITY> [Who the agent is] </AGENT_IDENTITY>
+    <PLANNER_MODULE> [How to plan steps] </PLANNER_MODULE>
+    <AGENT_LOOP> [Analyze -> Select Tools -> Wait -> Iterate] </AGENT_LOOP>
+    <RULES>
+       <TODO_RULES> [Maintain a todo.md] </TODO_RULES>
+       <CODING_RULES> [Save code to files, etc.] </CODING_RULES>
+       <FILE_RULES> [Read/write/append rules] </FILE_RULES>
+    </RULES>
     \`\`\`
 
     ### Context Engineering Rubrics
@@ -131,7 +164,7 @@ const callGeminiAPI = async (userPrompt, key, modelId) => {
     ### Evaluation Guidelines
     -   **Be Objective**: Score based strictly on the rubrics above.
     -   **Actionable Suggestions**: Do not say "Make it better". Say "Define 'short' as specific word count (e.g., < 100 words)."
-    -   **Recommended Prompt**: This MUST be a valid string in the JSON. Escape newlines and quotes properly if needed, but since this is a JSON response, the model usually handles specific escaping. prefer using \\n for newlines within the string.
+    -   **Recommended Prompt**: This MUST be a valid string in the JSON. Escape newlines and quotes properly if needed.
     `;
 
     // Ensure modelId doesn't have 'models/' prefix if user typed it
