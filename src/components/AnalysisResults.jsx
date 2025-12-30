@@ -10,7 +10,7 @@ const SeverityIcon = ({ severity }) => {
     }
 };
 
-const AnalysisResults = ({ results }) => {
+const AnalysisResults = ({ results, inputPrompt }) => {
     const [viewMode, setViewMode] = React.useState('formatted'); // 'formatted' | 'json'
 
     if (!results) return null;
@@ -20,6 +20,25 @@ const AnalysisResults = ({ results }) => {
     let scoreColor = 'var(--success)';
     if (score < 50) scoreColor = 'var(--error)';
     else if (score < 80) scoreColor = 'var(--warning)';
+
+    // Construct Vertex AI Payload
+    const vertexPayload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    { "text": inputPrompt || "" }
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 1,
+            "topK": 64,
+            "topP": 0.95,
+            "maxOutputTokens": 8192,
+            "responseMimeType": "text/plain"
+        }
+    };
 
     return (
         <div className="glass-card" style={{ padding: '2rem', marginTop: '2rem' }}>
@@ -67,8 +86,11 @@ const AnalysisResults = ({ results }) => {
 
             {viewMode === 'json' ? (
                 <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', overflow: 'auto' }}>
+                    <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                        Ready-to-use Vertex AI API Payload (based on your input)
+                    </div>
                     <pre style={{ margin: 0, fontSize: '0.85rem', color: '#a5b4fc', fontFamily: 'monospace' }}>
-                        {JSON.stringify(results, null, 2)}
+                        {JSON.stringify(vertexPayload, null, 2)}
                     </pre>
                 </div>
             ) : (

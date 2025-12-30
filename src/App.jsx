@@ -62,7 +62,7 @@ function App() {
           models={MODEL_LIMITS}
         />
 
-        <AnalysisResults results={results} />
+        <AnalysisResults results={results} inputPrompt={promptText} />
 
         {results && (
           <div style={{ textAlign: 'center', marginTop: '2rem' }}>
@@ -158,7 +158,7 @@ function App() {
           </div>
         )}
 
-        <DeepAnalysisResults results={deepResults} onClose={() => setDeepResults(null)} />
+        <DeepAnalysisResults results={deepResults} inputPrompt={promptText} onClose={() => setDeepResults(null)} />
       </main>
 
       <footer style={{ marginTop: '4rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', opacity: 0.6 }}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Brain, Shield, Zap, AlertOctagon, Lightbulb, FileText } from 'lucide-react';
 
-const DeepAnalysisResults = ({ results, onClose }) => {
+const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
     const [viewMode, setViewMode] = React.useState('formatted'); // 'formatted' | 'json'
 
     if (!results) return null;
@@ -12,6 +12,27 @@ const DeepAnalysisResults = ({ results, onClose }) => {
         if (type === 'ambiguity') return score > 3 ? 'var(--warning)' : 'var(--success)';
         if (type === 'safety') return score < 3 ? 'var(--error)' : 'var(--success)';
         return 'var(--text-primary)';
+    };
+
+    // Construct Vertex AI Payload
+    // Use recommended prompt if available, otherwise original input
+    const finalPrompt = results.recommendedPrompt || inputPrompt || "";
+    const vertexPayload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    { "text": finalPrompt }
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 1,
+            "topK": 64,
+            "topP": 0.95,
+            "maxOutputTokens": 8192,
+            "responseMimeType": "text/plain"
+        }
     };
 
     return (
@@ -67,8 +88,11 @@ const DeepAnalysisResults = ({ results, onClose }) => {
 
             {viewMode === 'json' ? (
                 <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', overflow: 'auto' }}>
+                    <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                        Ready-to-use Vertex AI API Payload ({results.recommendedPrompt ? "Optimized" : "Original"})
+                    </div>
                     <pre style={{ margin: 0, fontSize: '0.85rem', color: '#a5b4fc', fontFamily: 'monospace' }}>
-                        {JSON.stringify(results, null, 2)}
+                        {JSON.stringify(vertexPayload, null, 2)}
                     </pre>
                 </div>
             ) : (
