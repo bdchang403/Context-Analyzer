@@ -14,24 +14,24 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
                 const safetyScore = 5;
                 const needsRecommendation = ambiguityScore > 2 || safetyScore < 4;
 
-                const recommendedPrompt = needsRecommendation ? `<!-- RECOMMENDED PROMPT STRUCTURE -->
+                const recommendedPrompt = `<!-- RECOMMENDED PROMPT STRUCTURE -->
 <GOAL>
-  [Refined Goal based on your input]
+  ${prompt || "[Goal unclear from short input]"}
 </GOAL>
 
 <CONTEXT>
-  ${prompt}
+  [Add background context here]
 </CONTEXT>
 
 <INSTRUCTIONS>
-  - [ ] Specific Action 1
-  - [ ] Specific Action 2
-  - CRITICAL: Use the persona defined in context.
+  - [ ] Action item 1
+  - [ ] Action item 2
+  - CRITICAL: [Safety constraint]
 </INSTRUCTIONS>
 
 <OUTPUT_FORMAT>
   Markdown
-</OUTPUT_FORMAT>` : null;
+</OUTPUT_FORMAT>`;
 
                 resolve({
                     ambiguityScore,
@@ -93,12 +93,10 @@ const callGeminiAPI = async (userPrompt, key, modelId) => {
 
     3. **Standard**: If neither of the above apply, use Option A.
 
-    ### Conditional Recommendation
-    - You MUST return 'null' for the 'recommendedPrompt' field if:
-      1. The 'ambiguityScore' is 1 or 2 (Very Clear/Clear).
-      2. AND the 'safetyScore' is 4 or 5 (Safe/Very Safe).
-      3. OR if the user's prompt is already well-structured and your recommendation would be nearly identical.
-    - Otherwise, provide the rewritten prompt using one of the structures below.
+    ### Recommendation Instruction
+    - ALWAYS provide the rewritten 'recommendedPrompt' field using one of the structures above.
+    - Even if the original prompt is good, try to optimize it further or at least format it into the strict XML structure.
+    - Do NOT return null for 'recommendedPrompt'.
 
     ### Prompt Structures
     Choose the structure that best fits the user's intent.

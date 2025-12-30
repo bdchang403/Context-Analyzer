@@ -22,12 +22,19 @@ const AnalysisResults = ({ results, inputPrompt }) => {
     else if (score < 80) scoreColor = 'var(--warning)';
 
     // Construct Vertex AI Payload
+    // If the input is unstructured, wrap it in a template to guide the user (as per "outlined results")
+    let structuredText = inputPrompt || "";
+    // Simple check: if it lacks major XML tags, apply template structure
+    if (structuredText && !structuredText.includes("<GOAL>") && !structuredText.includes("<INSTRUCTIONS>")) {
+        structuredText = `<GOAL>\n${inputPrompt}\n</GOAL>\n\n<CONTEXT>\n  [Background Information]\n</CONTEXT>\n\n<INSTRUCTIONS>\n  - [ ] Step 1\n  - [ ] Step 2\n</INSTRUCTIONS>`;
+    }
+
     const vertexPayload = {
         "contents": [
             {
                 "role": "user",
                 "parts": [
-                    { "text": inputPrompt || "" }
+                    { "text": structuredText }
                 ]
             }
         ],
