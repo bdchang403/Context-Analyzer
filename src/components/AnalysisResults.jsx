@@ -96,7 +96,7 @@ const AnalysisResults = ({ results, inputPrompt }) => {
                     <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
                         Ready-to-use Vertex AI API Payload (based on your input)
                     </div>
-                    <pre style={{ margin: 0, fontSize: '0.85rem', color: '#a5b4fc', fontFamily: 'monospace' }}>
+                    <pre style={{ margin: 0, fontSize: '0.85rem', color: '#a5b4fc', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                         {JSON.stringify(vertexPayload, null, 2)}
                     </pre>
                 </div>
