@@ -147,3 +147,60 @@ If you are unsure if the problem is the Code, the Server, or the Browser:
 3. **Test**.
    - If it works: Your React app is broken (Outcome 3 or 4).
    - If it fails: Your Server/Environment is broken (Outcome 1 or 2).
+
+## GCP Free Tier Runners
+
+A guide to setting up and troubleshooting self-hosted GitHub Runners on Google Cloud Platform's Free Tier (`e2-micro`).
+
+### 1. Setup & Deployment (The "Easy" Way)
+We have automated the deployment using scripts in the `gcp-runner/` directory.
+
+**Steps:**
+1.  **Preparation**: Install `gcloud` SDK and authenticate (`gcloud auth login`).
+2.  **Configuration**: Create a `.env` file in `gcp-runner/` to store your GitHub Personal Access Token (PAT).
+    ```bash
+    # gcp-runner/.env
+    GITHUB_PAT=ghp_your_token_here
+    ```
+    *Note: Using `.env` prevents your secret token from being logged in terminal history or committed inadvertently.*
+3.  **Deploy**: Run the deployment script.
+    ```bash
+    cd gcp-runner
+    ./deploy.sh
+    ```
+
+### 2. Common Errors
+
+#### "Invalid value for field 'resource.instanceTemplate'"
+**Error:**
+```
+ERROR: (gcloud.compute.instance-groups.managed.create) Could not fetch resource:
+ - Invalid value for field 'resource.instanceTemplate': ... does not exist.
+```
+**Cause:**
+Scope Mismatch. The Instance Template was created as a **Regional** resource (using `--region=us-central1`), but the Managed Instance Group (MIG) creation command looked for a **Global** template by default.
+
+**Solution:**
+Ensure the Instance Template is created as a Global resource.
+- **Fix**: Remove the `--region` flag from the `gcloud compute instance-templates create` command.
+- **Status**: This has been fixed in the `deploy.sh` script in the repository. If you see this error, ensure you are using the latest version of the script.
+
+#### "Push cannot contain secrets" (GitHub Push Protection)
+**Error:**
+```
+remote: - GITHUB PUSH PROTECTION
+remote: Push cannot contain secrets
+```
+**Cause:**
+You attempted to commit a file (like `deploy.sh`) that contained a hardcoded GitHub PAT.
+
+**Solution:**
+1.  **Never hardcode secrets**. Use environment variables or prompt for input.
+2.  **Remove the secret**: Delete the token from the file.
+3.  **Amend the commit**:
+    ```bash
+    git add deploy.sh
+    git commit --amend --no-edit
+    git push --force-with-lease
+    ```
+
