@@ -148,9 +148,9 @@ If you are unsure if the problem is the Code, the Server, or the Browser:
    - If it works: Your React app is broken (Outcome 3 or 4).
    - If it fails: Your Server/Environment is broken (Outcome 1 or 2).
 
-## GCP Free Tier Runners
+## GCP Self-Hosted Runners
 
-A guide to setting up and troubleshooting self-hosted GitHub Runners on Google Cloud Platform's Free Tier (`e2-micro`).
+A guide to setting up and troubleshooting self-hosted GitHub Runners on Google Cloud Platform.
 
 ### 1. Setup & Deployment (The "Easy" Way)
 We have automated the deployment using scripts in the `gcp-runner/` directory.
@@ -201,6 +201,20 @@ You attempted to commit a file (like `deploy.sh`) that contained a hardcoded Git
     ```bash
     git add deploy.sh
     git commit --amend --no-edit
+    git commit --amend --no-edit
     git push --force-with-lease
     ```
+
+#### "ENOSPC: no space left on device"
+**Error:**
+```
+npm warn tar TAR_ENTRY_ERROR ENOSPC: no space left on device
+```
+**Cause:**
+The default Free Tier disk (30GB standard) is too small for Docker images, swap files, and large `node_modules`.
+
+**Solution:**
+Upgrade the infrastructure to use a larger disk.
+- **Fix**: The `deploy.sh` script has been updated to use **100GB pd-balanced (SSD)** disks.
+- **Action**: Redeploy your runners using the updated script.
 

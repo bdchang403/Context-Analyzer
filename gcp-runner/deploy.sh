@@ -27,7 +27,7 @@ echo "Region: $REGION (Free Tier eligible)"
 echo "Creating Instance Template..."
 gcloud compute instance-templates create $TEMPLATE_NAME \
     --project=$PROJECT_ID \
-    --machine-type=e2-micro \
+    --machine-type=e2-standard-2 \
     --network-interface=network-tier=PREMIUM,network=default,address= \
     --metadata-from-file=startup-script=./startup-script.sh \
     --metadata=github_pat=$GITHUB_PAT \
@@ -39,8 +39,8 @@ gcloud compute instance-templates create $TEMPLATE_NAME \
     --tags=http-server,https-server \
     --image=ubuntu-2204-jammy-v20231026 \
     --image-project=ubuntu-os-cloud \
-    --boot-disk-size=30GB \
-    --boot-disk-type=pd-standard \
+    --boot-disk-size=100GB \
+    --boot-disk-type=pd-balanced \
     --boot-disk-device-name=$TEMPLATE_NAME
 
 # 2. Create Managed Instance Group (MIG)

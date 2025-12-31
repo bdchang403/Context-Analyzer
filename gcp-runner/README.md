@@ -1,6 +1,6 @@
-# GCP Free Tier GitHub Runner Setup
+# GCP Self-Hosted GitHub Runner Setup
 
-This directory contains scripts to deploy a self-hosted GitHub Runner on GCP Free Tier (`e2-micro`) using a Managed Instance Group (MIG).
+This directory contains scripts to deploy a self-hosted GitHub Runner on GCP using **Standard Tier** resources (`e2-standard-2` with 100GB SSD) to ensure performance and avoid disk space issues (`ENOSPC`).
 
 ## Prerequisites
 
@@ -31,8 +31,8 @@ This directory contains scripts to deploy a self-hosted GitHub Runner on GCP Fre
 
 ## Architecture Notes
 
-- **Instance Type**: `e2-micro` (2 vCPU, 1 GB RAM).
-- **Swap**: 4GB swap file created on boot to prevent OOM.
+- **Instance Type**: `e2-standard-2` (2 vCPU, 8 GB RAM) - significant performance boost over free tier.
+- **Disk**: 100GB `pd-balanced` (SSD) - resolved `ENOSPC` errors during large Docker builds.
 - **Ephemerality**: The runner runs *one* job and then shuts down ("Ephemerality by Replacement"). The MIG automatically creates a new instance to replace it.
 - **Latency**: Expect 2-3 minutes of latency between jobs as the new VM boots and configures itself.
 
