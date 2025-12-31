@@ -9,9 +9,16 @@ TEMPLATE_NAME="gh-runner-template"
 MIG_NAME="gh-runner-mig"
 REPO_OWNER="bdchang403"
 REPO_NAME="Context-Analyzer"
-# PAT provided by user input
-read -s -p "Enter GitHub PAT: " GITHUB_PAT
-echo ""
+# Load from .env if it exists
+if [ -f .env ]; then
+    export $(cat .env | xargs)
+fi
+
+# Check if GITHUB_PAT is set, otherwise prompt
+if [ -z "$GITHUB_PAT" ]; then
+    read -s -p "Enter GitHub PAT: " GITHUB_PAT
+    echo ""
+fi
 
 echo "Deploying to Project: $PROJECT_ID"
 echo "Region: $REGION (Free Tier eligible)"

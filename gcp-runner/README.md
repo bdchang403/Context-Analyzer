@@ -6,7 +6,7 @@ This directory contains scripts to deploy a self-hosted GitHub Runner on GCP Fre
 
 1.  **Google Cloud SDK (`gcloud`)**: Installed and authenticated.
 2.  **Billing Enabled**: Even for Free Tier, billing must be enabled on the GCP project.
-3.  **GitHub PAT**: A Personal Access Token with `repo` scope (you will be prompted to enter this).
+3.  **GitHub PAT**: A Personal Access Token with `repo` scope. You can set this in an `.env` file (recommended) or enter it when prompted.
 
 ## Deployment
 
@@ -16,7 +16,13 @@ This directory contains scripts to deploy a self-hosted GitHub Runner on GCP Fre
     gcloud config set project YOUR_PROJECT_ID
     ```
 
-2.  **Run Deployment Script**:
+2.  **(Optional) Create .env**:
+    Create a `.env` file in the `gcp-runner` directory defining your PAT:
+    ```bash
+    GITHUB_PAT=your_pat_here
+    ```
+
+3.  **Run Deployment Script**:
     ```bash
     cd gcp-runner
     chmod +x deploy.sh startup-script.sh
