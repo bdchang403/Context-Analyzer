@@ -62,7 +62,7 @@ gcloud compute instance-groups managed create $MIG_NAME \
     --project=$PROJECT_ID \
     --base-instance-name=gh-runner \
     --template=$TEMPLATE_NAME \
-    --size=1 \
+    --size=2 \
     --zone=$ZONE
 
 # 3. Configure Auto-healing (Optional but recommended)
