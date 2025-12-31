@@ -16,7 +16,7 @@ env:
 jobs:
   test:
     name: CI & Test
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, gcp-micro]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
     name: Build & Deploy
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, gcp-micro]
     permissions:
       contents: 'read'
       id-token: 'write'

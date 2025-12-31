@@ -1,0 +1,56 @@
+#!/bin/bash
+# Deploy GCP Free Tier Runner Infrastructure
+
+# Configuration
+PROJECT_ID=$(gcloud config get-value project)
+REGION="us-central1"
+ZONE="us-central1-a"
+TEMPLATE_NAME="gh-runner-template"
+MIG_NAME="gh-runner-mig"
+REPO_OWNER="bdchang403"
+REPO_NAME="Context-Analyzer"
+# PAT provided by user input
+read -s -p "Enter GitHub PAT: " GITHUB_PAT
+echo ""
+
+echo "Deploying to Project: $PROJECT_ID"
+echo "Region: $REGION (Free Tier eligible)"
+
+# 1. Create Instance Template
+echo "Creating Instance Template..."
+gcloud compute instance-templates create $TEMPLATE_NAME \
+    --project=$PROJECT_ID \
+    --machine-type=e2-micro \
+    --network-interface=network-tier=PREMIUM,network=default,address= \
+    --metadata-from-file=startup-script=./startup-script.sh \
+    --metadata=github_pat=$GITHUB_PAT \
+    --maintenance-policy=MIGRATE \
+    --provisioning-model=STANDARD \
+    --service-account=default \
+    --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append \
+    --region=$REGION \
+    --tags=http-server,https-server \
+    --image=ubuntu-2204-jammy-v20231026 \
+    --image-project=ubuntu-os-cloud \
+    --boot-disk-size=30GB \
+    --boot-disk-type=pd-standard \
+    --boot-disk-device-name=$TEMPLATE_NAME
+
+# 2. Create Managed Instance Group (MIG)
+echo "Creating Managed Instance Group..."
+gcloud compute instance-groups managed create $MIG_NAME \
+    --project=$PROJECT_ID \
+    --base-instance-name=gh-runner \
+    --template=$TEMPLATE_NAME \
+    --size=1 \
+    --zone=$ZONE
+
+# 3. Configure Auto-healing (Optional but recommended)
+# We rely on the "shutdown -h now" in the startup script to terminate the instance.
+# The MIG will see the instance as not RUNNING and should restart/recreate it.
+# To ensure "Replacement" (fresh VM) rather than restart, we can set replacement policy,
+# but for e2-micro simple restart might be faster, however, for true ephemerality (clean state),
+# we want a fresh boot.
+
+echo "Deployment Complete."
+echo "Monitor the instance: gcloud compute instances list"
