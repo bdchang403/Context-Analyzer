@@ -75,6 +75,19 @@ The default `GITHUB_TOKEN` used in GitHub Actions does not have permissions to m
 2.  Add this token as a repository secret named `GH_PAT`.
 3.  Update the workflow to use `${{ secrets.GH_PAT }}` instead of `${{ secrets.GITHUB_TOKEN }}`.
 
+### 7. "gh: command not found"
+**Error:**
+```
+/actions-runner/.../script.sh: line 1: gh: command not found
+```
+**Cause:**
+You are using a self-hosted runner which does not have the GitHub CLI (`gh`) installed by default (unlike GitHub-hosted runners).
+
+**Solution:**
+Install the GitHub CLI in your runner's startup script.
+- **Fix**: The `startup-script.sh` has been updated to install `gh` via `apt`.
+- **Action**: Redeploy your runners to pick up the changes.
+
 ## Local Development: Debugging "Blank Page of Death"
 
 A summary of lessons learned from debugging the Context-Checking Tool. Use this guide when the app server starts but the browser shows a white screen or fails to load.

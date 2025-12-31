@@ -20,6 +20,19 @@ echo 'vm.swappiness=60' >> /etc/sysctl.conf
 echo "Installing Docker and Git..."
 apt-get update
 apt-get install -y docker.io git jq curl
+
+echo "Installing GitHub CLI (gh)..."
+# Create keyring directory if it doesn't exist
+mkdir -p -m 755 /etc/apt/keyrings
+# Download and install GitHub CLI keyring
+wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+# Add GitHub CLI repo
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+# Update and install gh
+apt-get update
+apt-get install -y gh
+
 systemctl enable --now docker
 # Allow default user to run docker if needed (though runner runs as root usually in this script)
 
