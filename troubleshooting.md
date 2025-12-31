@@ -218,3 +218,31 @@ Upgrade the infrastructure to use a larger disk.
 - **Fix**: The `deploy.sh` script has been updated to use **100GB pd-balanced (SSD)** disks.
 - **Action**: Redeploy your runners using the updated script.
 
+#### "The resource ... already exists"
+**Error:**
+```
+ERROR: (gcloud.compute.instance-templates.create) Could not fetch resource:
+ - The resource '.../gh-runner-template' already exists
+```
+**Cause:**
+You are re-running an older version of the `deploy.sh` script that does not handle existing resources. The script attempts to create resources that are already there (preventing updates).
+
+**Solution:**
+Use the latest `deploy.sh` which includes auto-cleanup logic.
+- **Fix**: The updated script checks for and deletes existing MIGs/Templates before creating new ones.
+- **Action**: `git pull origin main` and re-run `./deploy.sh`.
+
+#### "Could not fetch image resource"
+**Error:**
+```
+ERROR: (gcloud.compute.instance-templates.create) Could not fetch image resource:
+ - The resource 'projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20231026' was not found
+```
+**Cause:**
+The specific Ubuntu image version hardcoded in the script has been deprecated or deleted by Google Cloud.
+
+**Solution:**
+Use an **Image Family** instead of a specific version.
+- **Fix**: The `deploy.sh` script has been updated to use `--image-family=ubuntu-2204-lts`. This ensures it always pulls the latest valid LTS image.
+- **Action**: Update your script and redeploy.
+
