@@ -23,6 +23,20 @@ fi
 echo "Deploying to Project: $PROJECT_ID"
 echo "Region: $REGION (Free Tier eligible)"
 
+# 0. Cleanup Existing Resources (to allow upgrades/re-runs)
+echo "Cleaning up existing resources..."
+# Delete MIG if it exists
+if gcloud compute instance-groups managed describe $MIG_NAME --zone=$ZONE --project=$PROJECT_ID &>/dev/null; then
+    echo "Deleting existing MIG: $MIG_NAME"
+    gcloud compute instance-groups managed delete $MIG_NAME --zone=$ZONE --project=$PROJECT_ID --quiet
+fi
+
+# Delete Instance Template if it exists (Global)
+if gcloud compute instance-templates describe $TEMPLATE_NAME --project=$PROJECT_ID &>/dev/null; then
+    echo "Deleting existing Instance Template: $TEMPLATE_NAME"
+    gcloud compute instance-templates delete $TEMPLATE_NAME --project=$PROJECT_ID --quiet
+fi
+
 # 1. Create Instance Template
 echo "Creating Instance Template..."
 gcloud compute instance-templates create $TEMPLATE_NAME \
@@ -35,7 +49,6 @@ gcloud compute instance-templates create $TEMPLATE_NAME \
     --provisioning-model=STANDARD \
     --service-account=default \
     --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append \
-
     --tags=http-server,https-server \
     --image=ubuntu-2204-jammy-v20231026 \
     --image-project=ubuntu-os-cloud \
