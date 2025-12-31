@@ -35,7 +35,7 @@ gcloud compute instance-templates create $TEMPLATE_NAME \
     --provisioning-model=STANDARD \
     --service-account=default \
     --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append \
-    --region=$REGION \
+
     --tags=http-server,https-server \
     --image=ubuntu-2204-jammy-v20231026 \
     --image-project=ubuntu-os-cloud \
