@@ -51,26 +51,43 @@ if [ "$REG_TOKEN" == "null" ]; then
     exit 1
 fi
 
-# --- 6. Configure & Run (Ephemeral) ---
+# --- 6. Configure & Run (Persistent with Idle Timeout) ---
 echo "Configuring Runner..."
-# --ephemeral: Runner accepts one job then unconfigures itself
-# --name: Unique name based on hostname
-# --labels: self-hosted,linux,gcp-micro
+# Removed --ephemeral to allow multiple jobs
 export RUNNER_ALLOW_RUNASROOT=1
-./config.sh --url ${REPO_URL} --token ${REG_TOKEN} --ephemeral --unattended --name "$(hostname)" --labels "gcp-micro"
+./config.sh --url ${REPO_URL} --token ${REG_TOKEN} --unattended --name "$(hostname)" --labels "gcp-micro"
 
-echo "Starting Runner..."
-# run.sh blocks until the job is done (because of --ephemeral)
-./run.sh
+echo "Installing Runner as Service..."
+./svc.sh install
+./svc.sh start
 
-# --- 7. Self-Destruct / Replacement ---
-echo "Job complete. Shutting down to trigger MIG replacement..."
-# Getting the zone
-ZONE=$(curl -s -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/zone" | awk -F/ '{print $NF}')
-INSTANCE_NAME=$(hostname)
+# --- 7. Idle Shutdown Monitor ---
+# Monitor for 'Runner.Worker' process which indicates an active job.
+# If no job runs for IDLE_TIMEOUT seconds, shut down.
+IDLE_TIMEOUT=600 # 10 minutes
+CHECK_INTERVAL=30
+IDLE_TIMER=0
 
-# We use simple shutdown. The MIG should be configured with autohealing or just maintaining size.
-# If we shutdown, the MIG sees the instance as TERMINATED and usually restarts it or replaces it depending on config.
-# To force replacement (fresh VM), deleting is better, but shutdown is safer for scripts without write-permissions.
-# We will assume the MIG interprets "TERMINATED" as "Needs repair/replace".
-shutdown -h now
+echo "Starting Idle Monitor (Timeout: ${IDLE_TIMEOUT}s)..."
+
+while true; do
+  sleep $CHECK_INTERVAL
+  
+  # Check if Runner.Worker is running (indicates active job)
+  if pgrep -f "Runner.Worker" > /dev/null; then
+    echo "Job in progress. Resetting idle timer."
+    IDLE_TIMER=0
+  else
+    IDLE_TIMER=$((IDLE_TIMER + CHECK_INTERVAL))
+    echo "Runner idle for ${IDLE_TIMER}s..."
+  fi
+
+  if [ $IDLE_TIMER -ge $IDLE_TIMEOUT ]; then
+    echo "Idle timeout reached (${IDLE_TIMEOUT}s). Shutting down..."
+    # Deregister runner before shutdown (optional but clean)
+    # We can't easily deregister without the token, but the MIG replacement handles it eventually.
+    # Just shutdown.
+    shutdown -h now
+    break
+  fi
+done
