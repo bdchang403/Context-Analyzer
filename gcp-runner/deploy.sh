@@ -27,7 +27,7 @@ echo "Region: $REGION (Free Tier eligible)"
 echo "Creating Instance Template..."
 gcloud compute instance-templates create $TEMPLATE_NAME \
     --project=$PROJECT_ID \
-    --machine-type=e2-standard-2 \
+    --machine-type=e2-standard-4 \
     --network-interface=network-tier=PREMIUM,network=default,address= \
     --metadata-from-file=startup-script=./startup-script.sh \
     --metadata=github_pat=$GITHUB_PAT \
