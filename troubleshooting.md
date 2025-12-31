@@ -246,3 +246,28 @@ Use an **Image Family** instead of a specific version.
 - **Fix**: The `deploy.sh` script has been updated to use `--image-family=ubuntu-2204-lts`. This ensures it always pulls the latest valid LTS image.
 - **Action**: Update your script and redeploy.
 
+#### "bash: ./deploy.sh: Permission denied"
+**Error:**
+```
+bash: ./deploy.sh: Permission denied
+```
+**Cause:**
+The scripts lost their executable permission, possibly due to a `git reset` or file transfer.
+
+**Solution:**
+Make the scripts executable.
+- **Fix**: Run `chmod +x deploy.sh startup-script.sh`.
+
+#### Slow Performance / Queuing
+**Symptom:**
+Validating or deploying seems slow, or jobs are waiting in queue.
+
+**Cause:**
+1.  **Cold Boot**: If you are using true "Ephemeral" mode, every job waits ~2 mins for a VM to boot.
+2.  **MIG Size**: If size=1, only one job can run at a time.
+
+**Solution:**
+We have optimized the architecture to handle this:
+1.  **Idle Timeout**: Runners now stay active for **10 minutes** after a job. This allows consecutive jobs to run instantly (0 latency) and leverage Docker layer caching.
+2.  **Concurrency**: The Managed Instance Group (MIG) size is set to **2**, allowing 2 parallel jobs (or overlapping workflows).
+- **Action**: Ensure you have deployed the latest version of `gcp-runner/deploy.sh` and `startup-script.sh`.

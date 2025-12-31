@@ -33,8 +33,10 @@ This directory contains scripts to deploy a self-hosted GitHub Runner on GCP usi
 
 - **Instance Type**: `e2-standard-4` (4 vCPU, 16 GB RAM) - significant performance boost over free tier.
 - **Disk**: 100GB `pd-balanced` (SSD) - resolved `ENOSPC` errors during large Docker builds.
-- **Ephemerality**: The runner runs *one* job and then shuts down ("Ephemerality by Replacement"). The MIG automatically creates a new instance to replace it.
-- **Latency**: Expect 2-3 minutes of latency between jobs as the new VM boots and configures itself.
+- **Persistence**: The runner process stays active to handle multiple jobs (preserving Docker layer cache).
+- **Idle Timeout**: To save costs, the instance shuts down if no jobs run for **10 minutes** ("Idle Timeout"). The MIG will eventually replace it.
+- **Concurrency**: MIG Size is set to **2** to allow parallel execution.
+- **Latency**: First run takes 2-3 mins (Cold Start). Subsequent runs within 10 mins are instant.
 
 ## Troubleshooting
 
