@@ -17,7 +17,11 @@ grep -q 'vm.swappiness=60' /etc/sysctl.conf || echo 'vm.swappiness=60' >> /etc/s
 # 2. Install Dependencies
 echo "Installing Docker, Git, JQ, GH..."
 apt-get update
-apt-get install -y docker.io git jq curl
+apt-get install -y docker.io git jq curl wget
+
+# Ensure Docker is running for pulls
+systemctl start docker
+systemctl enable docker
 
 # Install GitHub CLI
 mkdir -p -m 755 /etc/apt/keyrings

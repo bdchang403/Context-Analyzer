@@ -7,17 +7,16 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
     if (!apiKey) {
         return new Promise((resolve) => {
             setTimeout(() => {
-                setTimeout(() => {
-                    const isShort = prompt.length < 50;
-                    const lowerPrompt = prompt.toLowerCase();
-                    const hasContradiction = lowerPrompt.includes("always") && lowerPrompt.includes("never");
-                    const isComparison = lowerPrompt.includes("compare") || lowerPrompt.includes("diff") || lowerPrompt.includes("difference");
+                const isShort = prompt.length < 50;
+                const lowerPrompt = prompt.toLowerCase();
+                const hasContradiction = lowerPrompt.includes("always") && lowerPrompt.includes("never");
+                const isComparison = lowerPrompt.includes("compare") || lowerPrompt.includes("diff") || lowerPrompt.includes("difference");
 
-                    const ambiguityScore = isShort ? 4 : 2;
-                    const safetyScore = 5;
-                    const needsRecommendation = ambiguityScore > 2 || safetyScore < 4;
+                const ambiguityScore = isShort ? 4 : 2;
+                const safetyScore = 5;
+                const needsRecommendation = ambiguityScore > 2 || safetyScore < 4;
 
-                    const recommendedPrompt = `<!-- RECOMMENDED PROMPT STRUCTURE -->
+                const recommendedPrompt = `<!-- RECOMMENDED PROMPT STRUCTURE -->
 <GOAL>
   ${prompt || "[Goal unclear from short input]"}
 </GOAL>
@@ -36,47 +35,47 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
   Markdown
 </OUTPUT_FORMAT>`;
 
-                    resolve({
-                        ambiguityScore,
-                        ambiguityReasoning: isShort ? "The prompt is too short to fully grasp the intent, leaving key constraints undefined." : "Most terms are well-defined, though 'appropriately' is subjective.",
-                        safetyScore,
-                        safetyReasoning: "The prompt does not venture into any dangerous or sensitive topics.",
-                        contradictions: hasContradiction ?
-                            ["Contradiction found: You used terms 'always' and 'never' which might conflict contextually."] : [],
-                        suggestions: [
-                            "Clarify the 'persona' tone. You mentioned 'professional' but the prompt uses slang.",
-                            "Define 'success constraints' more explicitly. What happens if the agent fails?",
-                            "Consider adding a 'negative constraint' (e.g., 'Do not use emojis')."
-                        ],
-                        clarifyingQuestions: isComparison ? [
-                            "What is the relationship between the items being compared (e.g., Version 1 vs Version 2, or Product A vs Product B)?",
-                            "Are there specific dimensions of comparison you are most interested in?",
-                            "How should the differences be categorized?"
-                        ] : [
-                            "Are you comparing two different versions of the document, or two completely different documents?",
-                            "What is the target audience for this analysis?",
-                            "Do you have a specific format in mind for the output?"
-                        ],
-                        thoughts: "The prompt defines a clear goal but lacks error handling instructions. The user uses vague terms like 'appropriately' which could lead to inconsistent outputs. (MOCK ANALYSIS)",
-                        recommendedPrompt
-                    });
-                }, 1000);
-            });
-        }
+                resolve({
+                    ambiguityScore,
+                    ambiguityReasoning: isShort ? "The prompt is too short to fully grasp the intent, leaving key constraints undefined." : "Most terms are well-defined, though 'appropriately' is subjective.",
+                    safetyScore,
+                    safetyReasoning: "The prompt does not venture into any dangerous or sensitive topics.",
+                    contradictions: hasContradiction ?
+                        ["Contradiction found: You used terms 'always' and 'never' which might conflict contextually."] : [],
+                    suggestions: [
+                        "Clarify the 'persona' tone. You mentioned 'professional' but the prompt uses slang.",
+                        "Define 'success constraints' more explicitly. What happens if the agent fails?",
+                        "Consider adding a 'negative constraint' (e.g., 'Do not use emojis')."
+                    ],
+                    clarifyingQuestions: isComparison ? [
+                        "What is the relationship between the items being compared (e.g., Version 1 vs Version 2, or Product A vs Product B)?",
+                        "Are there specific dimensions of comparison you are most interested in?",
+                        "How should the differences be categorized?"
+                    ] : [
+                        "Are you comparing two different versions of the document, or two completely different documents?",
+                        "What is the target audience for this analysis?",
+                        "Do you have a specific format in mind for the output?"
+                    ],
+                    thoughts: "The prompt defines a clear goal but lacks error handling instructions. The user uses vague terms like 'appropriately' which could lead to inconsistent outputs. (MOCK ANALYSIS)",
+                    recommendedPrompt
+                });
+            }, 1000);
+        });
+    }
 
-// 2. REAL MODE (Gemini API)
-try {
-            return await callGeminiAPI(prompt, apiKey, modelId);
-        } catch (error) {
-            console.error("Gemini API Error:", error);
-            throw error; // Re-throw exact error message from callGeminiAPI
-        }
-    };
+    // 2. REAL MODE (Gemini API)
+    try {
+        return await callGeminiAPI(prompt, apiKey, modelId);
+    } catch (error) {
+        console.error("Gemini API Error:", error);
+        throw error; // Re-throw exact error message from callGeminiAPI
+    }
+};
 
-    import { RESEARCH_TAGS, AGENTIC_TAGS } from './analyzer.js';
+import { RESEARCH_TAGS, AGENTIC_TAGS } from './analyzer.js';
 
-    const callGeminiAPI = async (userPrompt, key, modelId) => {
-        const SYSTEM_PROMPT = `
+const callGeminiAPI = async (userPrompt, key, modelId) => {
+    const SYSTEM_PROMPT = `
     You are an expert Evaluator Agent acting as a 'Judge' for prompt engineering quality.
     Your goal is to assess the user's prompt for clarity, safety, and effectiveness, AND to rewrite it into a highly structured, effective prompt.
 
@@ -188,47 +187,47 @@ try {
     -   **Recommended Prompt**: This MUST be a valid string in the JSON. Escape newlines and quotes properly if needed.
     `;
 
-        // Ensure modelId doesn't have 'models/' prefix if user typed it
-        const cleanModelId = modelId.replace('models/', '');
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanModelId}:generateContent?key=${key}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: SYSTEM_PROMPT + "\n\nAnalyze this prompt:\n" + userPrompt }]
-                }],
-                generationConfig: {
-                    responseMimeType: "application/json"
-                }
-            })
-        });
+    // Ensure modelId doesn't have 'models/' prefix if user typed it
+    const cleanModelId = modelId.replace('models/', '');
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanModelId}:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{ text: SYSTEM_PROMPT + "\n\nAnalyze this prompt:\n" + userPrompt }]
+            }],
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
+        })
+    });
 
-        if (!response.ok) {
-            const err = await response.json();
-            const msg = err.error?.message || "API Request Failed";
-            throw new Error(`Gemini API Error: ${msg}`);
-        }
+    if (!response.ok) {
+        const err = await response.json();
+        const msg = err.error?.message || "API Request Failed";
+        throw new Error(`Gemini API Error: ${msg}`);
+    }
 
-        const data = await response.json();
-        try {
-            const text = data.candidates[0].content.parts[0].text;
-            return JSON.parse(text);
-        } catch (e) {
-            throw new Error("Failed to parse Gemini response: " + e.message);
-        }
-    };
+    const data = await response.json();
+    try {
+        const text = data.candidates[0].content.parts[0].text;
+        return JSON.parse(text);
+    } catch (e) {
+        throw new Error("Failed to parse Gemini response: " + e.message);
+    }
+};
 
-    export const fetchAvailableModels = async (apiKey) => {
-        if (!apiKey) throw new Error("API Key required");
+export const fetchAvailableModels = async (apiKey) => {
+    if (!apiKey) throw new Error("API Key required");
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || "Failed to list models");
-        }
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Failed to list models");
+    }
 
-        const data = await response.json();
-        return data.models || [];
-    };
+    const data = await response.json();
+    return data.models || [];
+};
