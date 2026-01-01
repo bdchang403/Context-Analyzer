@@ -29,3 +29,4 @@ gcp-runner/gcp-key.json
 gcp-runner/cleanup_runners.cjs
 gcp-runner/node_modules/
 gcp-runner/*.tar.gz
+gcp-runner/google-cloud-sdk/

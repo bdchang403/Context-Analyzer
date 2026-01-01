@@ -143,3 +143,40 @@ cleanup() {
 }
 trap cleanup EXIT SIGINT SIGTERM
 ```
+
+### gcloud Command Not Found (Path Issues)
+**Symptoms:**
+- Build or Deploy scripts fail with `gcloud: command not found`.
+- Partial execution where some resource creation calls work (if hardcoded) but others properly using the variable fail.
+
+**Cause:**
+- The `gcloud` CLI is not in the system `$PATH`, which is common when the SDK is installed locally in the project directory (e.g., `./google-cloud-sdk/bin/gcloud`) rather than globally.
+
+**Solution:**
+- **Dynamic Path Resolution**: Update scripts (`build-image.sh`, `deploy.sh`) to detect and use the local binary if present.
+  ```bash
+  GCLOUD_BIN="gcloud"
+  if [ -f "./google-cloud-sdk/bin/gcloud" ]; then
+      GCLOUD_BIN="./google-cloud-sdk/bin/gcloud"
+  fi
+  # Use $GCLOUD_BIN instead of gcloud
+  $GCLOUD_BIN compute instances list ...
+  ```
+
+### Offline Runner Clutter
+**Symptoms:**
+- GitHub "Runners" settings page is filled with hundreds of "Offline" runners.
+- Requires manual cleanup.
+
+**Cause:**
+- Runners are destroyed (e.g., by MIG scaling down or preemption) without successfully running their deregistration cleanup scripts.
+- Runners are not configured as "ephemeral", so GitHub expects them to reconnect.
+
+**Solution:**
+1.  **Use Ephemeral Runners**: Add the `--ephemeral` flag to your `config.sh` command in `startup-script.sh`. This instructs GitHub to automatically unregister the runner after it processes *one* job.
+    ```bash
+    # startup-script.sh
+    ./config.sh ... --ephemeral --replace
+    ```
+2.  **Cleanup Script**: Use the GitHub API to bulk-delete offline runners if they accumulate. Since `gh` CLI might not be authenticated or available, a raw API script (Node.js/Curl) is reliable.
+
