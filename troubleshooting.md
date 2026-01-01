@@ -44,7 +44,11 @@ set -e
 
 # 1. Install Dependencies
 apt-get update
-apt-get install -y docker.io git jq curl
+apt-get install -y docker.io git jq curl wget
+
+# Ensure Docker is running (for pulls)
+systemctl start docker
+systemctl enable docker
 
 # 2. Install GitHub Runner
 mkdir -p /actions-runner && cd /actions-runner
@@ -80,7 +84,24 @@ gcloud compute instances create gh-runner-builder \
     --image-project=ubuntu-os-cloud
 
 # 2. Wait for setup (Monitor serial output manually or via script loop)
-sleep 300 
+sleep 300```
+
+## Build / Deployment Issues
+
+### Runners Not Connecting (Golden Image Failure)
+**Symptoms:**
+- The deployment (`deploy.sh`) succeeds, but runners never appear in GitHub Settings.
+- Validated via `gcloud compute instances list` that VMs are running.
+- Validated via `gcloud compute instances get-serial-port-output` that the startup script failed or exited early.
+
+**Cause:**
+- If the **Golden Image setup script** (`setup-image.sh`) fails (e.g., missing `wget` or Docker not started), the image is created with a broken state.
+- When the runner boots from this image, the "lightweight" startup script assumes dependencies exist, but they don't, leading to immediate failure.
+
+**Solution:**
+1.  **Check Setup Logs**: Run the build script and monitor the temporary VM's serial output to ensure `setup-image.sh` completed successfully ("Golden Image Setup Complete").
+2.  **Robustify Setup**: Ensure `setup-image.sh` explicitly installs all tools (including `wget` for the runner download) and starts critical services like Docker (`systemctl start docker`) before attempting downstream actions.
+3.  **Rebuild**: You MUST delete the old image and rebuild it for changes to `setup-image.sh` to take effect.
 
 # 3. Stop and Create Image
 gcloud compute instances stop gh-runner-builder --zone=$ZONE

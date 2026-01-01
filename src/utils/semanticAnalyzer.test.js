@@ -15,6 +15,12 @@ describe('Deep Semantic Analyzer (Mock)', () => {
         expect(typeof result.ambiguityScore).toBe('number');
         expect(Array.isArray(result.suggestions)).toBe(true);
         expect(Array.isArray(result.clarifyingQuestions)).toBe(true);
+
+        // Check structure of suggestions
+        if (result.suggestions.length > 0) {
+            expect(result.suggestions[0]).toHaveProperty('text');
+            expect(result.suggestions[0]).toHaveProperty('relatedHeader');
+        }
     });
 
     it('should detect simulated contradiction', async () => {

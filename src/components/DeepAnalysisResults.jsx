@@ -285,17 +285,38 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
                             <Lightbulb size={16} /> Semantic Suggestions
                         </h3>
                         <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: '0.75rem' }}>
-                            {suggestions.map((s, i) => (
-                                <li key={i} style={{
-                                    background: 'rgba(30, 58, 138, 0.2)',
-                                    borderLeft: '3px solid #60a5fa',
-                                    padding: '0.75rem 1rem',
-                                    borderRadius: '0 8px 8px 0',
-                                    fontSize: '0.9rem'
-                                }}>
-                                    {s}
-                                </li>
-                            ))}
+                            {suggestions.map((s, i) => {
+                                const text = typeof s === 'string' ? s : s.text;
+                                const header = s.relatedHeader;
+                                return (
+                                    <li key={i} style={{
+                                        background: 'rgba(30, 58, 138, 0.2)',
+                                        borderLeft: '3px solid #60a5fa',
+                                        padding: '0.75rem 1rem',
+                                        borderRadius: '0 8px 8px 0',
+                                        fontSize: '0.9rem',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'flex-start',
+                                        gap: '0.5rem'
+                                    }}>
+                                        <span>{text}</span>
+                                        {header && (
+                                            <span style={{
+                                                fontSize: '0.7rem',
+                                                background: 'rgba(96, 165, 250, 0.2)',
+                                                color: '#93c5fd',
+                                                padding: '0.1rem 0.4rem',
+                                                borderRadius: '4px',
+                                                whiteSpace: 'nowrap',
+                                                fontFamily: 'monospace'
+                                            }}>
+                                                {header}
+                                            </span>
+                                        )}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
 
@@ -305,18 +326,39 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
                                 <HelpCircle size={16} /> Clarifying Questions
                             </h3>
                             <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: '0.75rem' }}>
-                                {clarifyingQuestions.map((q, i) => (
-                                    <li key={i} style={{
-                                        background: 'rgba(190, 24, 93, 0.2)',
-                                        borderLeft: '3px solid #f472b6',
-                                        padding: '0.75rem 1rem',
-                                        borderRadius: '0 8px 8px 0',
-                                        fontSize: '0.9rem',
-                                        color: '#fbcfe8'
-                                    }}>
-                                        {q}
-                                    </li>
-                                ))}
+                                {clarifyingQuestions.map((q, i) => {
+                                    const text = typeof q === 'string' ? q : q.text;
+                                    const header = q.relatedHeader;
+                                    return (
+                                        <li key={i} style={{
+                                            background: 'rgba(190, 24, 93, 0.2)',
+                                            borderLeft: '3px solid #f472b6',
+                                            padding: '0.75rem 1rem',
+                                            borderRadius: '0 8px 8px 0',
+                                            fontSize: '0.9rem',
+                                            color: '#fbcfe8',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'flex-start',
+                                            gap: '0.5rem'
+                                        }}>
+                                            <span>{text}</span>
+                                            {header && (
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    background: 'rgba(244, 114, 182, 0.2)',
+                                                    color: '#fbcfe8',
+                                                    padding: '0.1rem 0.4rem',
+                                                    borderRadius: '4px',
+                                                    whiteSpace: 'nowrap',
+                                                    fontFamily: 'monospace'
+                                                }}>
+                                                    {header}
+                                                </span>
+                                            )}
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </div>
                     )}

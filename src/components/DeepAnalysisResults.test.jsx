@@ -28,8 +28,8 @@ describe('DeepAnalysisResults Component', () => {
         ambiguityReasoning: "Ambiguity Reasoning",
         safetyReasoning: "Safety Reasoning",
         contradictions: ["Contradiction 1"],
-        suggestions: ["Suggestion 1"],
-        clarifyingQuestions: ["Question 1"],
+        suggestions: [{ text: "Suggestion 1", relatedHeader: "<INSTRUCTIONS>" }],
+        clarifyingQuestions: [{ text: "Question 1", relatedHeader: "<GOAL>" }],
         thoughts: "AI Thoughts",
         recommendedPrompt: "<GOAL>Test Goal</GOAL>" // Structured prompt
     };
