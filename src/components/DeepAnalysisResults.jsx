@@ -382,7 +382,12 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
                                     color: '#d1d5db',
                                     whiteSpace: 'pre-wrap'
                                 }}>
-                                    {results.recommendedPrompt}
+                                    {(() => {
+                                        let text = results.recommendedPrompt || '';
+                                        // Ensure double newlines between closing tag and opening tag of next section
+                                        text = text.replace(/(<\/[A-Z_]+>)\s*(<[A-Z_]+>)/g, '$1\n\n$2');
+                                        return text;
+                                    })()}
                                 </pre>
                             </div>
                         </div>

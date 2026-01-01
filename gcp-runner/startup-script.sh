@@ -51,7 +51,7 @@ echo "Configuring Runner as $RUNNER_NAME..."
 # export RUNNER_ALLOW_RUNASROOT=1  <-- Usually better to run as user, but sticking to existing pattern if needed
 export RUNNER_ALLOW_RUNASROOT=1
 
-./config.sh --url ${REPO_URL} --token ${REG_TOKEN} --unattended --name "$RUNNER_NAME" --labels "gcp-micro" --replace
+./config.sh --url ${REPO_URL} --token ${REG_TOKEN} --unattended --name "$RUNNER_NAME" --labels "gcp-micro" --ephemeral --replace
 
 echo "Installing/Starting Service..."
 # Only install if not installed

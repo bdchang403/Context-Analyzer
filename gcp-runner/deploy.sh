@@ -2,7 +2,13 @@
 # Deploy GCP Free Tier Runner Infrastructure
 
 # Configuration
-PROJECT_ID=$(gcloud config get-value project)
+# Resolve gcloud path
+GCLOUD_BIN="gcloud"
+if [ -f "./google-cloud-sdk/bin/gcloud" ]; then
+    GCLOUD_BIN="./google-cloud-sdk/bin/gcloud"
+fi
+
+PROJECT_ID=$($GCLOUD_BIN config get-value project)
 REGION="us-central1"
 ZONE="us-central1-a"
 TEMPLATE_NAME="gh-runner-template"
@@ -26,20 +32,20 @@ echo "Region: $REGION (Free Tier eligible)"
 # 0. Cleanup Existing Resources (to allow upgrades/re-runs)
 echo "Cleaning up existing resources..."
 # Delete MIG if it exists
-if gcloud compute instance-groups managed describe $MIG_NAME --zone=$ZONE --project=$PROJECT_ID &>/dev/null; then
+if $GCLOUD_BIN compute instance-groups managed describe $MIG_NAME --zone=$ZONE --project=$PROJECT_ID &>/dev/null; then
     echo "Deleting existing MIG: $MIG_NAME"
-    gcloud compute instance-groups managed delete $MIG_NAME --zone=$ZONE --project=$PROJECT_ID --quiet
+    $GCLOUD_BIN compute instance-groups managed delete $MIG_NAME --zone=$ZONE --project=$PROJECT_ID --quiet
 fi
 
 # Delete Instance Template if it exists (Global)
-if gcloud compute instance-templates describe $TEMPLATE_NAME --project=$PROJECT_ID &>/dev/null; then
+if $GCLOUD_BIN compute instance-templates describe $TEMPLATE_NAME --project=$PROJECT_ID &>/dev/null; then
     echo "Deleting existing Instance Template: $TEMPLATE_NAME"
-    gcloud compute instance-templates delete $TEMPLATE_NAME --project=$PROJECT_ID --quiet
+    $GCLOUD_BIN compute instance-templates delete $TEMPLATE_NAME --project=$PROJECT_ID --quiet
 fi
 
 # 1. Create Instance Template
 echo "Creating Instance Template..."
-gcloud compute instance-templates create $TEMPLATE_NAME \
+$GCLOUD_BIN compute instance-templates create $TEMPLATE_NAME \
     --project=$PROJECT_ID \
     --machine-type=e2-standard-4 \
     --network-interface=network-tier=PREMIUM,network=default,address= \
@@ -59,7 +65,7 @@ gcloud compute instance-templates create $TEMPLATE_NAME \
 
 # 2. Create Managed Instance Group (MIG)
 echo "Creating Managed Instance Group..."
-gcloud compute instance-groups managed create $MIG_NAME \
+$GCLOUD_BIN compute instance-groups managed create $MIG_NAME \
     --project=$PROJECT_ID \
     --base-instance-name=gh-runner \
     --template=$TEMPLATE_NAME \
