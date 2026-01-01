@@ -9,10 +9,12 @@ describe('Deep Semantic Analyzer (Mock)', () => {
         expect(result).toHaveProperty('safetyScore');
         expect(result).toHaveProperty('contradictions');
         expect(result).toHaveProperty('suggestions');
+        expect(result).toHaveProperty('clarifyingQuestions');
         expect(result).toHaveProperty('thoughts');
 
         expect(typeof result.ambiguityScore).toBe('number');
         expect(Array.isArray(result.suggestions)).toBe(true);
+        expect(Array.isArray(result.clarifyingQuestions)).toBe(true);
     });
 
     it('should detect simulated contradiction', async () => {

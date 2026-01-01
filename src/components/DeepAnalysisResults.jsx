@@ -24,7 +24,7 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
 
     if (!results) return null;
 
-    const { ambiguityScore, safetyScore, contradictions, suggestions, thoughts } = results;
+    const { ambiguityScore, safetyScore, contradictions, suggestions, clarifyingQuestions, thoughts } = results;
 
     const getScoreColor = (score, type) => {
         if (type === 'ambiguity') return score > 3 ? 'var(--warning)' : 'var(--success)';
@@ -298,6 +298,28 @@ const DeepAnalysisResults = ({ results, inputPrompt, onClose }) => {
                             ))}
                         </ul>
                     </div>
+
+                    {clarifyingQuestions && clarifyingQuestions.length > 0 && (
+                        <div style={{ marginBottom: '2rem' }}>
+                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fda4af' }}>
+                                <HelpCircle size={16} /> Clarifying Questions
+                            </h3>
+                            <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: '0.75rem' }}>
+                                {clarifyingQuestions.map((q, i) => (
+                                    <li key={i} style={{
+                                        background: 'rgba(190, 24, 93, 0.2)',
+                                        borderLeft: '3px solid #f472b6',
+                                        padding: '0.75rem 1rem',
+                                        borderRadius: '0 8px 8px 0',
+                                        fontSize: '0.9rem',
+                                        color: '#fbcfe8'
+                                    }}>
+                                        {q}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
 
                     {results.recommendedPrompt && (
                         <div style={{ marginTop: '2rem' }}>

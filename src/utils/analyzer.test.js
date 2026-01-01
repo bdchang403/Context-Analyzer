@@ -183,4 +183,43 @@ describe('Prompt Analyzer', () => {
         });
     });
 
+    describe('5. Preciseness & Vague Language', () => {
+        it('should penalize vague phrases like "etc." and "and so on"', () => {
+            const vagueText = "I want a list of fruits like apples, bananas, etc. and so on. Goal: List fruits.";
+            const result = analyzePrompt(vagueText);
+
+            expect(result.score).toBeLessThan(100);
+
+            const precisenessIssue = result.issues.find(i => i.category === 'Preciseness');
+            expect(precisenessIssue).toBeDefined();
+            expect(precisenessIssue.text).toContain('"etc."');
+            expect(precisenessIssue.text).toContain('"and so on"');
+        });
+
+        it('should detect "and stuff" at the end of a sentence', () => {
+            const vagueText = "Goal: Just do the coding and stuff.";
+            const result = analyzePrompt(vagueText);
+            const issue = result.issues.find(i => i.category === 'Preciseness');
+            expect(issue).toBeDefined();
+            expect(issue.text).toContain('"and stuff (like that)"');
+        });
+
+        it('should detect "and things like that"', () => {
+            const vagueText = "Goal: Handle errors, logging, and things like that.";
+            const result = analyzePrompt(vagueText);
+            const issue = result.issues.find(i => i.category === 'Preciseness');
+            expect(issue).toBeDefined();
+            expect(issue.text).toContain('"and things (like that)"');
+        });
+
+        it('should NOT penalize "and things" if followed by specific nouns or clauses', () => {
+            // "and things matching" -> not "like that" or end of sentence
+            const specificText = "Goal: Return a list of users and things matching the criteria provided.";
+
+            const result = analyzePrompt(specificText);
+            const precisenessIssue = result.issues.find(i => i.category === 'Preciseness');
+            expect(precisenessIssue).toBeUndefined();
+        });
+    });
+
 });

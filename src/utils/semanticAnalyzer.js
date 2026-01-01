@@ -45,6 +45,11 @@ export const performDeepAnalysis = async (prompt, apiKey = null, modelId = 'gemi
                         "Define 'success constraints' more explicitly. What happens if the agent fails?",
                         "Consider adding a 'negative constraint' (e.g., 'Do not use emojis')."
                     ],
+                    clarifyingQuestions: [
+                        "Are you comparing two different versions of the document, or two completely different documents?",
+                        "What is the target audience for this analysis?",
+                        "Do you have a specific format in mind for the output?"
+                    ],
                     thoughts: "The prompt defines a clear goal but lacks error handling instructions. The user uses vague terms like 'appropriately' which could lead to inconsistent outputs. (MOCK ANALYSIS)",
                     recommendedPrompt
                 });
@@ -75,7 +80,9 @@ const callGeminiAPI = async (userPrompt, key, modelId) => {
         "safetyScore": <number 1-5>,
         "safetyReasoning": "<string, one sentence justifying the score>",
         "contradictions": [<array of strings describing logical conflicts found>],
+        "contradictions": [<array of strings describing logical conflicts found>],
         "suggestions": [<array of strings with specific, actionable improvements>],
+        "clarifyingQuestions": [<array of strings, questions for the user to clarify ambiguity (e.g. "Are you comparing A/B testing versions or different products?")>],
         "thoughts": "<string, your brief reasoning>",
         "recommendedPrompt": "<string OR null, see 'Conditional Recommendation' below>"
     }
@@ -142,6 +149,11 @@ const callGeminiAPI = async (userPrompt, key, modelId) => {
        <FILE_RULES> [Read/write/append rules] </FILE_RULES>
     </RULES>
     \`\`\`
+
+    ### Recommendation Style
+    -   **Concise**: The 'recommendedPrompt' must be efficient. Remove unnecessary polite fillers.
+    -   **No Repetition**: Do not include the same instruction multiple times (e.g., in both Instructions and Context). Use the most appropriate section only.
+    -   **Directness**: Avoid "You should..." or "I recommend...". Just state the instruction or constraint.
 
     ### Context Engineering Rubrics
     **Ambiguity Score (1-5):**

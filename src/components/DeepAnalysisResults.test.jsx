@@ -29,6 +29,7 @@ describe('DeepAnalysisResults Component', () => {
         safetyReasoning: "Safety Reasoning",
         contradictions: ["Contradiction 1"],
         suggestions: ["Suggestion 1"],
+        clarifyingQuestions: ["Question 1"],
         thoughts: "AI Thoughts",
         recommendedPrompt: "<GOAL>Test Goal</GOAL>" // Structured prompt
     };
@@ -40,6 +41,12 @@ describe('DeepAnalysisResults Component', () => {
         render(<DeepAnalysisResults results={mockResults} inputPrompt={inputPrompt} onClose={onClose} />);
         expect(screen.getByText('Deep Semantic Analysis')).toBeDefined();
         expect(screen.getByText('Ambiguity Score')).toBeDefined(); // Assuming unique
+    });
+
+    it('renders clarifying questions when present', () => {
+        render(<DeepAnalysisResults results={mockResults} inputPrompt={inputPrompt} onClose={onClose} />);
+        expect(screen.getByText('Clarifying Questions')).toBeDefined();
+        expect(screen.getByText('Question 1')).toBeDefined();
     });
 
     it('toggles to JSON view and shows Vertex payload by default', async () => {

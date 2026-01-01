@@ -159,6 +159,38 @@ Goal: Extract user intents from the chat logs.
         score -= 5;
     }
 
+    // 5. Vague Phrase Check
+    const vagueRegexes = [
+        { regex: /\betc\./i, label: "etc." },
+        { regex: /\bet cetera\b/i, label: "et cetera" },
+        { regex: /\band so on\b/i, label: "and so on" },
+        { regex: /\band so forth\b/i, label: "and so forth" },
+        { regex: /\band the like\b/i, label: "and the like" },
+        { regex: /\band that kind of thing\b/i, label: "and that kind of thing" },
+        { regex: /\band stuff(?=\s+like that|[.,;!?]|$)/i, label: "and stuff (like that)" },
+        { regex: /\band things(?=\s+like that|[.,;!?]|$)/i, label: "and things (like that)" },
+        { regex: /\band what have you\b/i, label: "and what have you" }
+    ];
+
+    const foundVaguePhrases = [];
+    vagueRegexes.forEach(({ regex, label }) => {
+        if (regex.test(text)) {
+            foundVaguePhrases.push(label);
+        }
+    });
+
+    if (foundVaguePhrases.length > 0) {
+        // Deduct points for using vague language
+        score -= 5 * foundVaguePhrases.length;
+
+        issues.push({
+            category: "Preciseness",
+            text: `Vague phrases detected: ${foundVaguePhrases.map(m => `"${m}"`).join(", ")}. Precise instructions lead to better results.`,
+            example: "Instead of '...and so on', explicitly list all required items or criteria.",
+            severity: "medium"
+        });
+    }
+
     return {
         score: Math.max(0, score),
         issues,
